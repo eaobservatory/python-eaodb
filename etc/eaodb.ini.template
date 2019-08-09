@@ -1,0 +1,18 @@
+[CALIBRATION]
+# The database URL should be given in a form recognised by SQLAlchemy,
+# for example:
+#     sqlite+pysqlite:////file_path
+# mysql+mysqlconnector://<user>:<password>@<host>[:<port>]/<dbname>?charset=utf8
+
+url =  mysql+mysqldb://<calibrationuser>:<calibrationpassword>@<hostname>/calibration?charset=utf8
+echo = 0
+
+[DATABASE_READONLY]
+
+# This requires a user and password combination that can access
+# (readonly) all databases.
+
+url =  mysql+mysqldb://<readonlyuser>:<password>@<hostname>/omp?charset=utf8
+echo = 0
+
+
