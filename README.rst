@@ -1,13 +1,15 @@
 python-eaodb: tools to access and use EAO's databases via SQLAlchemy's ORM
 
+Overview
+--------
 
 This contains automatically generated classes for the omp, jcmt,
 calibration, jsa_proc and pigwidgeon database tables. It also contains
 utilities for connecting to the database in either read-write or
 read-only mode. In addition, there are some additional helper files contained here:
 
-  1. ompstate.py contains a class taken from jsa_proc allowing easy
-     look up and manipulation of the ompstate names-integers.
+* ompstate.py contains a class taken from jsa_proc allowing easy
+  look up and manipulation of the ompstate names-integers.
 
 To connect to the databases, there are helper function ins eaodb.util
 which will read a config file and then return appropriate sqlalchemy
@@ -17,7 +19,10 @@ engines for either readonly connections or read-write connections
 An example config file (without hostnames or passwords) is included in
 this repo.
 
-Examples of use:
+Examples of use
+---------------
+
+This is only brief exmaple::
 
     from eaodb import omp, jcmt
     from eaodb import calibration as cal
