@@ -120,9 +120,9 @@ class mapstats(Base):
     rms = Column(Float(asdecimal=True))
     rms_units = Column(String(10))
     nefd = Column(Float(asdecimal=True))
-    nefd_units = Column(Float(asdecimal=True))
-    ra = Column(Float(asdecimal=True))
-    dec_ = Column(Float(asdecimal=True))
+    nefd_units = Column(String(10))
+    ra = Column(String(20))
+    dec_ = Column(String(20))
     mapsize = Column(Float(asdecimal=True))
     pixscale = Column(Float(asdecimal=True))
     project = Column(String(10))
@@ -197,6 +197,20 @@ class noisestats(Base):
     grouptype = Column(String(10))
 
     loginfo = relationship('loginfo')
+
+
+class removedobs(Base):
+    __tablename__ = 'removedobs'
+    __table_args__ = {'schema': 'calibration'}
+
+    id = Column(INTEGER(11), primary_key=True)
+    logsource_id = Column(ForeignKey('calibration.loginfo.id'), nullable=False, index=True)
+    obsid_subsysnr = Column(String(30))
+    utdate = Column(INTEGER(11))
+    obsnum = Column(INTEGER(11))
+    subsys = Column(INTEGER(11))
+
+    logsource = relationship('loginfo')
 
 
 class standard(Base):
