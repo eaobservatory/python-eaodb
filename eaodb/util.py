@@ -1,4 +1,4 @@
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
 try:
     from configparser import ConfigParser
@@ -71,3 +71,7 @@ def create_readonly_all_engine():
     engine = create_engine(dburl, echo=bool(echo))
     return engine
 
+
+def create_readonly_scoped_session():
+    readonly_engine = create_readonly_all_engine()
+    return scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=readonly_engine))
