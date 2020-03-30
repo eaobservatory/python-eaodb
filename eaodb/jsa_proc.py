@@ -41,6 +41,7 @@ class task(Base):
     command_xfer = Column(String(255))
     raw_output = Column(TINYINT(1))
     command_ingest = Column(String(255))
+    log_ingest = Column(String(255))
 
 
 class input_file(Base):
@@ -124,6 +125,21 @@ class obs(Base):
     tau = Column(Float)
     seeing = Column(Float)
     date_end = Column(DateTime)
+
+    job = relationship('job')
+
+
+class obsidss(Base):
+    __tablename__ = 'obsidss'
+    __table_args__ = (
+        Index('job_id_obsidss', 'job_id', 'obsid_subsysnr', unique=True),
+        {'schema': 'jsa_proc'}
+    )
+
+    id = Column(INTEGER(11), primary_key=True)
+    job_id = Column(ForeignKey('jsa_proc.job.id'), nullable=False)
+    obsid_subsysnr = Column(String(50), nullable=False, index=True)
+    obsid = Column(String(48), nullable=False)
 
     job = relationship('job')
 
