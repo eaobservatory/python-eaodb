@@ -120,7 +120,7 @@ class mapstats(Base):
     rms = Column(Float(asdecimal=True))
     rms_units = Column(String(10))
     nefd = Column(Float(asdecimal=True))
-    nefd_units = Column(String(10))
+    nefd_units = Column(String(20))
     ra = Column(String(20))
     dec_ = Column(String(20))
     mapsize = Column(Float(asdecimal=True))
@@ -174,6 +174,7 @@ class noise(Base):
     tau = Column(Float(asdecimal=True))
     sigma = Column(Float(asdecimal=True))
     grouptype = Column(String(10))
+    file = Column(String(50))
 
     loginfo = relationship('loginfo')
 
@@ -199,18 +200,37 @@ class noisestats(Base):
     loginfo = relationship('loginfo')
 
 
+class receptor(Base):
+    __tablename__ = 'receptor'
+    __table_args__ = {'schema': 'calibration'}
+
+    id = Column(INTEGER(11), primary_key=True)
+    loginfo_id = Column(ForeignKey('calibration.loginfo.id'), nullable=False, index=True)
+    obsid_subsysnr = Column(String(30))
+    hybrid = Column(INTEGER(11))
+    transition = Column(String(20))
+    molecule = Column(String(2))
+    bandwidth = Column(String(20))
+    receptor = Column(String(10))
+    restfreq = Column(Float(asdecimal=True))
+    tsys = Column(Float(asdecimal=True))
+    rms = Column(Float(asdecimal=True))
+
+    loginfo = relationship('loginfo')
+
+
 class removedobs(Base):
     __tablename__ = 'removedobs'
     __table_args__ = {'schema': 'calibration'}
 
     id = Column(INTEGER(11), primary_key=True)
-    logsource_id = Column(ForeignKey('calibration.loginfo.id'), nullable=False, index=True)
+    loginfo_id = Column(ForeignKey('calibration.loginfo.id', ondelete='CASCADE'), index=True)
     obsid_subsysnr = Column(String(30))
     utdate = Column(INTEGER(11))
     obsnum = Column(INTEGER(11))
     subsys = Column(INTEGER(11))
 
-    logsource = relationship('loginfo')
+    loginfo = relationship('loginfo')
 
 
 class standard(Base):
@@ -228,7 +248,7 @@ class standard(Base):
     lofreq = Column(Float(asdecimal=True))
     targetname = Column(String(30))
     molecule = Column(String(10))
-    line = Column(String(10))
+    line = Column(String(20))
     mode = Column(String(10))
     bandwidth = Column(String(20))
     sideband = Column(String(3))
@@ -239,5 +259,7 @@ class standard(Base):
     l_bound = Column(Float(asdecimal=True))
     h_bound = Column(Float(asdecimal=True))
     grouptype = Column(String(10))
+    integ_percent = Column(Float(asdecimal=True))
+    peak_percent = Column(Float(asdecimal=True))
 
     loginfo = relationship('loginfo')
