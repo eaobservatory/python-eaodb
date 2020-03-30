@@ -1,6 +1,6 @@
 # coding: utf-8
 from sqlalchemy import Column, Date, DateTime, ForeignKey, String, Table, Text
-from sqlalchemy.dialects.mysql import INTEGER, TINYINT
+from sqlalchemy.dialects.mysql import INTEGER, TEXT, TINYINT
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -14,8 +14,8 @@ class papers(Base):
 
     id = Column(INTEGER(11), primary_key=True)
     bibcode = Column(String(20), nullable=False)
-    title = Column(Text)
-    abstract = Column(Text)
+    title = Column(TEXT)
+    abstract = Column(TEXT)
     pub_openaccess = Column(TINYINT(1))
     refereed = Column(TINYINT(1))
     doi = Column(String(100))
@@ -150,7 +150,7 @@ class papertype_value(Base):
     __table_args__ = {'schema': 'pigwidgeon'}
 
     id = Column(INTEGER(11), primary_key=True)
-    comment_id = Column(ForeignKey('pigwidgeon.comments.id'), nullable=False, index=True)
+    comment_id = Column(ForeignKey('pigwidgeon.comments.id', ondelete='CASCADE'), nullable=False, index=True)
     papertype_id = Column(ForeignKey('pigwidgeon.paper_types.id'), nullable=False, index=True)
 
     comment = relationship('comments')
@@ -163,9 +163,9 @@ class info_section_values(Base):
 
     id = Column(INTEGER(11), primary_key=True)
     info_section_id = Column(ForeignKey('pigwidgeon.info_sections.id'), nullable=False, index=True)
-    comment_id = Column(ForeignKey('pigwidgeon.comments.id'), nullable=False, index=True)
+    comment_id = Column(ForeignKey('pigwidgeon.comments.id', ondelete='CASCADE'), nullable=False, index=True)
     info_sublist_id = Column(ForeignKey('pigwidgeon.info_sublists.id'), index=True)
-    entered_text = Column(Text)
+    entered_text = Column(TEXT)
 
     comment = relationship('comments')
     info_section = relationship('info_sections')
