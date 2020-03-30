@@ -21,7 +21,7 @@ class myModelClass(ModelClass):
 
 config = get_config()
 
-for db in ('omp', 'jcmt', 'jsa_proc', 'pigwidgeon', 'calibration'):
+for db in ('omp', 'jcmt', 'jsa_proc', 'pigwidgeon', 'calibration', 'hedwig2omp'):
     dburl = config.get('DATABASE_READONLY', 'url')
     dburl = dburl.replace('/omp?', '/{}?'.format(db))
     readonly_engine = create_engine(dburl, echo=0)
