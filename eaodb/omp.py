@@ -184,7 +184,6 @@ class proj(Base):
     pi = Column(String(32), nullable=False)
     title = Column(String(255))
     semester = Column(String(10), nullable=False, index=True)
-    encrypted = Column(String(20), nullable=False)
     allocated = Column(Float(asdecimal=True), nullable=False, index=True)
     remaining = Column(Float(asdecimal=True), nullable=False, index=True)
     pending = Column(Float(asdecimal=True), nullable=False, index=True)
