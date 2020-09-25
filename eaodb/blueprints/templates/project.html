@@ -1,0 +1,79 @@
+{% extends 'project_layout.html' %}
+{% set active_page="Projects" %}
+{% set active_page_side="Project" %}
+{% block title %}
+{% endblock %}
+
+
+{% from "macros.html" import membertable, msbtable,
+faulttable, project_dateactivitysummary, acceptedmsbs,
+observationsummary, observationtable %}
+
+{% block content %}
+<div class="title">
+  <h1>{{project.projectid}}: {{project.title}}</h1>
+</div>
+<div class="main datesummary mb-3">
+  <h3>Summary</h3>
+  <div class="row">
+  <div id="completionpie" class="col-sm-4x">
+    {{piechart|safe}}
+  </div>
+  <div id="completionscatter" class="col-sm-4x">
+    {{cumulative|safe}}
+  </div>
+  <div id="observability">
+    {{observability|safe}}
+  </div>
+  </div>
+
+</div>
+
+<div class="main papers">
+  <h3>Publications</h3>
+  <p>JCMT papers are those that are classed by EAO as meeting the
+  official criteria inclusion as either a paper directly using JCMT
+  data, or a JCMT specific theory paper. For large programs/legacy
+  programs across multiple project codes, this list  may include all
+  JCMT papers for all codes.</p>
+  <h4>JCMT Papers using this project's observations: {{direct_papers|length}}</h4>
+  <ol>
+  {% for i in direct_papers %}
+    <li><em>{{i.title}}</em>, {{i.authors[0].author}} +{{i.authors|length - 1}} others, {{i.pubdate}}, <a
+  href="https://ui.adsabs.harvard.edu/abs/{{i.bibcode}}/abstract">{{i.bibcode}}</a>,
+  refereed={{i.refereed}}</li>
+  {% endfor %}
+  </ol>
+    <h4>JCMT papers using the above papers as source: {{secondary_papers|length}}</h4>
+  <ol>
+  {% for i in secondary_papers %}
+    <li><em>{{i.title}}</em>, {{i.authors[0].author}} +{{i.authors|length - 1}} others, {{i.pubdate}}, <a
+  href="https://ui.adsabs.harvard.edu/abs/{{i.bibcode}}/abstract">{{i.bibcode}}</a>,
+  refereed={{i.refereed}}</li>
+  {% endfor %}
+  </ol>
+  
+  </div>
+  <div class="main msbs">
+    <h3>MSBs</h3>
+    {{msbtable(project.msbs_scheduled|selectattr('remaining', 'gt', 0)|list, proj_taumax=project.taumax, proj_taumin=project.taumin)}}
+{% if msbs_summary %}
+  {{acceptedmsbs(msbs_summary)}}
+  {% else %}
+  <p> No MSBs completed yet. </p>
+  {% endif %}
+</div>
+
+
+
+<div class="main faults">
+  {% if project.faults %}
+  <h3>Faults associated with this project <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.faults" aria-expanded="true" aria-controls="table.faults">Hide/Show</button></h3>
+  {{faulttable(project.faults)}}
+  {% endif %}
+</div>
+
+
+
+
+{% endblock %}

@@ -1,7 +1,428 @@
+{% macro memberrows(members, type, short=True) %}
+{% for member in members %}
+<tr>
+  {% if loop.index==1 %}
+  <th>{{type}}</th>
+  {% else %}
+  <th></th>
+  {% endif %}
+  <td>{{member.user.uname}}</td>
+  {% if short %}
+  {{ member|contactable|safe }}
+  {{ member|cadc|safe }}
+  {% else %}
+  <td>{{member.user.email}}</td>
+  <td>{{member.contactable}}</td>
+  <td>{{member.user.cadcuser}}</td>
+  {% endif %}
+</tr>
+{% endfor %}
+{% endmacro %}
+
+{% macro membertable(pis, fops, cois, projectid=None, short=True) %}
+<table id="membertable" class="membertable">
+  <tr>
+    <th colspan="2">
+      {% if projectid %}
+      <h4><a
+ href="http://omp.eao.hawaii.edu/cgi-bin/projusers.pl?urlprojid={{projectid}}">Member
+       Info</h4></a>
+      {% endif %}
+    </th>
+    {% if short %}
+    <th class="vertical"><span>email</span></th>
+    <th class="vertical"><span>CADC</span></th>
+    {% else %}
+    <th>Email</th>
+    <th>Contactable</th>
+    <th>CADC</th>
+    {% endif %}
+  </tr>
+  {{memberrows(pis, 'PI', short=short)}}
+  {{memberrows(fops, 'Support', short=short)}}
+  {{memberrows(cois, 'CoI', short=short)}}
+</table>
+{% endmacro %}
 
 
+{% macro format_msbrow(msb, index, proj_taumin=0.0, proj_taumax=500) %}
+<tr>
+  <td>{{index}}</td>
+  <td>{{msb.title}}</td>
+  <td>{{ msb.plannedobs|map(attribute='target')|join('<br/> ')}}</td>
+  <td>{{ msb.plannedobs|map(attribute='full_instrument')|join('<br/>') }}</td>
+  <td>{%for p in msb.plannedobs %}{{'%.3F' % (3e5/p.wavelength|float)}}<br/>{% endfor %}</td>
+  <td>{{'%.1F' % (msb.taumin, proj_taumin)|max}}</td>
+  <td>{{'%.1F' % (msb.taumax, proj_taumax)|min}}</td>
+  <td>{{'%.0F' % (msb.timeest|float/60.0)}}</td>
+  <td>{{msb.remaining}}</td>
+  <td>{%for p in msb.plannedobs %}{% if p.ra2000 %}{{'%.3F' %
+  p.ra2000}}{% else %} None {% endif %}<br/>{% endfor %}</td>
+  <td>{%for p in msb.plannedobs %}{% if p.dec2000 %} {{'%.3F' %
+  p.dec2000}}{% else %} None {% endif %}<br/>{% endfor %}</td>
+  <td>{{msb.priority}}</td>
+</tr>
+{% endmacro %}
 
-	 
+{% macro msbtable(msbs, proj_taumax=500, proj_taumin=0) %}
+
+{% if not msbs or msbs|length==0 %}
+<p> No MSBs found waiting to be observed in the OMP database.</p>
+{% else %}
+
+<p>To see the detailed structure of the science program, please
+use the OT. This is merely a summary, and could be misleading for
+projects using structures such as or folders or survey
+containers</p>
+
+<h5>MSBs with repeats remaining <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.msbs-scheduled" aria-expanded="true" aria-controls="table.msbs-scheduled">Hide/Show</button></h5>
+<table class="table-sm table table-nonfluid msbs msbs-scheduled collapse show">
+  <thead class="thead-dark">
+    {% if msbs|selectattr('remaining', 'gt', 0)|list|length > 0 %}
+    <tr>
+      <th>MSB</th>
+      <th>Title</th>
+      <th>Target/s</th>
+      <th>Instrument/s</th>
+      <th>Frequency</th>
+      <th>min. Tau</th>
+      <th>max. Tau</th>
+      <th>Time (mins)</th>
+      <th>Reps</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Priority</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for msb in msbs|sort(attribute="priority,remaining,title")|selectattr('remaining', 'gt', 0) %}
+    {{ format_msbrow(msb, loop.index, proj_taumin=proj_taumin, proj_taumax=proj_taumax)}}
+    {% endfor %}
+    {% endif %}
+    {% if msbs|selectattr('remaining', 'eq', 0)|list|length > 0 %}
+    <tr class="infoline"><th colspan="12">MSBs with  no repeats remaining</th></tr>
+    {% for msb in msbs|sort(attribute='priority')|selectattr('remaining', 'eq', 0) %}
+    {{ format_msbrow(msb, proj_taumin=proj_taumin, proj_taumax=proj_taumax)}}
+    {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+{% endif %}
+{% endmacro %}
+
+
+{% macro project_header_sidebar(project) %}
+
+{% if project %}
+<li><h1>{{project.projectid}}</h1></li>
+<li class="small">{{project.title}}
+<hr/>
+</li>
+
+<li>
+
+<table class="twocolumn norowcolor">
+  <tr class="p-0">
+    <td>PI</td>
+    <td>
+      <span class="user">
+      {{project.pis|join(',',attribute='user.uname')}}
+      </span>
+    </td>
+  </tr>
+  <tr>
+    <td>FoP</td>
+    <td>
+      <span class="user">
+      {{project.fops|join(', ',attribute='user.uname')}}
+      </span>
+    </td>
+  </tr>
+  {% if project.cois|length > 0 %}
+  <tr>
+    <td>CoI</td>
+    <td>
+      <span class="user">
+      {% if project.cois|length == 1 %}
+      {{project.cois[0].uname}}
+      {% else %}
+      {{project.cois|length}} co-investigators
+      {% endif %}
+      </span>
+    </td>
+  </tr>
+  {% endif %}
+</table>
+<hr/>
+</li>
+
+<li class="small">
+{{project.semester}} / {{project.queues|join(', ')}} /
+<span class="{{project.state|enabled}}">
+{{project.state|enabled}}</span> / <span
+class="lower">τ=</span>{{'%.2F-%.2F' % (project.taumin,
+project.taumax)}}
+</li>
+<li>
+<span class="font-weight-bold">{{'%.1F' %project.completion}}%</span> ({{'%.1f'
+%(project.used|float/(60.0*60))}} /
+{{'%.1f'%(project.allocated|float/(60.0*60))}} hrs{% if project.pending >
+0 %}, ({{'%.1f'%(project.pending|float/(60.0*60))}} hrs pending{% endif
+%})
+<hr/>
+</li>
+
+{% set side_navigation_links = [('project.projectpage', "Project"),
+('project.obspage','Observations'), ('project.projectpage','MSBs'), ('project.projectpage',
+'Users'), ('project.projectpage', 'Faults'), ('project.projectpage',
+'Feedback')] %}
+
+{% for href, id in side_navigation_links %}
+<li class="{% if id==active_page_side %} active{% endif %}">
+        <a class="nav-link p-0" href="{{url_for(href,projectid=project.projectid)}}" >{{id}}</a></li>
+	{% endfor %}
+	<li><hr/></li>
+	{% endif %}
+  <li><a class="nav-link p-0 {% if
+	active_page_side=='Search' %} active {% endif %}"
+	href="{{url_for('project.project_search')}}" >Project Search</a></li>
+  <li><a class="nav-link p-0" href="https://omp.eao.hawaii.edu">OMP Home</a></li>
+  <li><a class="nav-link p-0" href="http://omp.eao.hawaii.edu/cgi-bin/projecthome.pl?urlprojid={{project.projectid}}">
+  OMP Project Home</a></li>
+{% endmacro %}
+
+
+{% macro project_header(project) %}
+<header>
+<p>{{project.title}}</p>
+<h1>{{project.projectid}}</h1>
+<table class="twocolumn norowcolor">
+  <tr>
+    <td>PI</td>
+    <td>
+      <span class="user">
+      {{project.pis|join(',',attribute='user.uname')}}
+      </span>
+    </td>
+  </tr>
+  <tr>
+    <td>FoP</td>
+    <td>
+      <span class="user">
+      {{project.fops|join(', ',attribute='user.uname')}}
+      </span>
+    </td>
+  </tr>
+  {% if project.cois|length > 0 %}
+  <tr>
+    <td>CoI</td>
+    <td>
+      <span class="user">
+      {% if project.cois|length == 1 %}
+      {{project.cois[0].uname}}
+      {% else %}
+      {{project.cois|length}} co-investigators
+      {% endif %}
+      </span>
+    </td>
+  </tr>
+</table>
+</br>
+{% endif %}
+<p>
+{{project.semester}} / {{project.queues|join(', ')}} /
+<span class="{{project.state|enabled}}">
+{{project.state|enabled}}</span> / <span
+class="lower">τ=</span>{{'%.2F-%.2F' % (project.taumin,
+project.taumax)}}
+<br/>
+{{'%.1F' %project.completion}} % ({{'%.1f'
+%(project.used|float/60.0)}} /
+{{'%.1f'%(project.allocated|float/60.0)}} hrs{% if project.pending >
+0 %}, ({{'%.1f'%(project.pending|float/60.0)}} hrs pending{% endif
+%})
+<br/><br/>
+</p>
+
+<ul>
+  <li><a href="{{url_for('.obspage', projectid=project.projectid)}}">Observations</a></li>
+  <li>MSBs</li>
+  <li>Faults</li>
+  <li>Feedback</li>
+  <br></br>
+  <li><a href="https://omp.eao.hawaii.edu">OMP Home</a></li>
+  <li><a href="http://omp.eao.hawaii.edu/cgi-bin/projecthome.pl?urlprojid={{project.projectid}}">
+  OMP Project Home</a></li>
+</ul>
+</header>
+{% endmacro %}
+
+
+{% macro faulttable(faults) %}
+<table class="table faults table-sm table-nonfluid collapse show">
+  <thead class="thead-dark">
+  <tr>
+    <th>ID </th>
+    <th>Subject</th>
+    <th>Status</th>
+    <th>Timelost (hrs)</th>
+    <th>Shift</th>
+  </tr>
+  </thead>
+  {% for f in faults %}
+  <tr class="{{f.urgency}}">
+    <td><a href="https://omp.eao.hawaii.edu/cgi-bin/viewfault.pl?fault={{'%.3F'% f.faultid}}">{{'%.3F' % f.faultid}}</a></td>
+    <td>{{f.subject}}</td>
+    <td>{{f.status}}</td>
+    <td>{{'%.1F'% f.timelost}}</td>
+    <td>{{f.shifttype}}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+{% endmacro %}
+
+{% macro project_dateactivitysummary(activity) %}
+<table class="table table-sm table-nonfluid">
+  <caption>Charged times are rounded and include some overheads and slewing time; generally
+  they will be larger than the total time spent on sky (Observed) for
+  Questionable and Good observations.</caption>
+  <thead class="thead-dark">
+    <tr>
+      <th>Date</th><th>Charged</th><th>Shifts</th><th>Comments</th><th>Observed</th>
+    </tr>
+    </thead>
+  <tbody>
+    {% for d in activity %}
+    {% set timecharged, observations = activity[d] %}
+    <tr>
+      <th>{{d}}</th>
+      <td>{{'%.1F' % timecharged['all-confirmed']|default(0)}} hrs
+	{% if timecharged and timecharged['all-pending'] > 0 %}
+	({{'%.1F' % timecharged["all-pending"]}} hrs pending)
+	{% endif %}
+      </td>
+      <td>
+	{% if timecharged.shifts %}
+	{% for t in timecharged['shifts'] %}
+	{% set shiftobj = timecharged['shifts'][t] %}
+	{% set shift=t %}
+	{% if not shift %} {% set shift="UNKNOWN" %} {% endif %}
+	{{shift}}: {{'%.1F' % shiftobj['confirmed']}} hrs {% if
+	shiftobj['pending'] > 0 %} ({{'%.1F' % shiftobj['pending']}} hrs){% endif %}
+	<br/>
+	{% endfor %}
+	{% endif %}
+      </td>
+      <td class="comment">
+	{% if timecharged.shifts %}
+	{% for t in timecharged['shifts'] %}
+	{% set shiftobj = timecharged['shifts'][t] %}
+	{% if shiftobj.comment %}
+	{{t}}: <span class="timeacctcomment">{{shiftobj.comment}}</span>
+	{%endif %}
+	<br/>
+	{% endfor %}
+	{% endif %}
+      </td>
+      <td>
+	{% if observations  %}
+	{%for o in observations %}
+	{{o[1]}} <span class="{{o[3]}}">{{o[3]}}</span> Grade {{o[2]}} : {{'%.1F'% observations[o]}}
+	hrs<br/>
+	{% endfor %}
+	{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro acceptedmsbs(msbs_summary) %}
+<h5>Completed MSBs <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.msbs-accepted" aria-expanded="true" aria-controls="table.msbs-accepted">Hide/Show</button> </h5>
+<table class="table table-sm table-nonfluid msbs msbs-accepted collapse show">
+  <thead class="thead-dark">
+
+    <tr>
+      <th>Instrument</th>
+      <th>Title</th>
+      <th>Target</th>
+      <th>Waveband</th>
+      <th>Obs.</th>
+      <th>MSB Reps</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% set msbs_summary  = msbs_summary|sort(attribute='title,instrument,target,status') %}
+    {% for msb in msbs_summary %}
+    <tr>
+      {% if msbs_summary[loop.index - 2].checksum != msb.checksum %}
+      <td>{% if msb.obsinstrument %} {{msb.obsinstrument}} {% else
+	%} {{msb.instrument}} {% endif %}</td>
+      <td>{{msb.title}}</td>
+      <td>{{msb.target}}</td>
+      <td>{{msb.waveband}}</td>
+      <td>{{msb.observationcount}}</td>
+      {% else %}
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      {% endif %}
+      <td>{{msb.msb_count}}</td>
+      <td>{{msb.status|msbstatus}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endmacro %}
+
+{% macro observationsummary(observations) %}
+<table>
+  <tr>
+    <th>MSB Title (or Source)</th>
+    <th>Instrument</th>
+    <th>Waveband/s</th>
+    <th>OMP Status</th>
+    <th>Number</th>
+  </tr>
+  {% for instrument, grouped in observations|groupby('instrument') %}
+  {% for checksum, grouped in grouped|groupby('msbid') %}
+  {% for ompstatus, obslist in grouped|groupby('ompstatus') %}
+  <tr>
+    <td>{% if obslist[-1].msbtitle %}{{obslist[-1].msbtitle}}{%
+      else %} {{obslist[0].object}} {% endif %}</td>
+    <td>{{instrument}}</td>
+    <td>
+      {% set obs = obslist[-1] %}
+      {% if obs.instrume == 'SCUBA-2' %}
+      {% for i in obs.scuba2 %}
+      {{i.filter}}<br/>
+      {% endfor %}
+      {% elif obs.backend == 'ACSIS' %}
+      {% for  i in obs.acsis %}
+      {% if i.molecule %}
+      {{i.molecule}}&nbsp;{{i.transiti}}<br/>
+      {% else %}
+      {{'%.3f' % float(i.restfreq)}}<br/>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+    </td>
+    <td>{{ompstatus}}</td>
+    <td>{{obslist|length}}</td>
+  </tr>
+  {% endfor %}
+  {% endfor %}
+  {% endfor %}
+</table>
+{% endmacro %}
+
+
 {% macro get_formatted_value(obs, value, c) -%}
   {% if value is string -%}
   {{ obs[value] | format_value(c) }}
@@ -21,6 +442,9 @@
 {%- endmacro %}
 
 {% macro observationtable(observations, columns, title=None, id=None) %}
+
+
+
 <table class="observation table collapse show" {% if id %}id="{{id}}"{% endif %}>
   {% if title %}
   <caption>{{title}} Observations ({{observations|length}})<button class="btn btn-primary" data-toggle="collapse" data-target=".multi-collapse-{{id}}" type="button" aria-expanded="true" aria-controls=".multi-collapse-{{id}}">Show/Hide</a></caption>
@@ -48,7 +472,6 @@
 
 <form method="POST" action="{{url_for('obs.observation_search')}}" class="obsquery">
 <div class="form-row">
- 
 <div class="col-lg-3 col-md-4">
   <legend>
       <label>Observation Information</label>
@@ -76,8 +499,7 @@
 <div class="col-lg-3 col-md-4">
   <fieldset>
   <legend><label><span class="align-middle">Date and  Time</span>
-  <a href="#" class="helpicon" 
-  data-toggle="popover" title="Date and Time help" data-content="Give
+  <a href="#" class="helpicon" data-toggle="popover" title="Date and Time help" data-content="Give
   a UTC date (YYYY-MM-DD) or Date and Time (YYYY-MM-DD HH:MM:SS) and
   search only for observations after and/or before that time. If you
   select 'Single Day', then observations that started within the Date
@@ -98,7 +520,7 @@
     </div>
   </div>
   </fieldset>
- 
+
   <fieldset>
   <legend><label><span class="align-middle">Time of Day</span>
   <a href="#" class="icon text-primary" data-toggle="popover" title="Time of Day help" data-content="Give

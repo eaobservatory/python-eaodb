@@ -1,0 +1,38 @@
+{% extends 'project_layout.html' %}
+{% set active_page_side="Observations" %}
+
+{% block title %}
+{% endblock %}
+
+{% block content %}
+{% from "macros.html"import  project_header, observationtable, project_dateactivitysummary %}
+<h2>Activity Summary <a class="btn btn-primary" data-toggle="collapse" href="#activitysum" role="button"  aria-expanded="true", aria-controls="collapseActivitySummary">(Click to show/hide)</a></h2>
+{% set activity = project.get_dates_obsactivity(byshift=True, observations=observations) %}  
+  {% if activity %}
+  <div class="collapse show" id="activitysum">
+    {{project_dateactivitysummary(activity)}}
+  </div>
+
+  {% if observations %}
+  <h2>Time spent on sky</h2>
+  {{inst_time_plots|safe}}
+  {% endif %}
+  {% else %}
+  <p>No observations have been done and no time charged to the project.</p>
+  {% endif %}
+<h2>Observations</h2>
+
+<div class="main observation">
+  {% if observations and observations|length >0%}
+  {% for instrument, obslist in observations|groupby('instrument') %}
+  {% if obslist[0].backend == 'SCUBA-2' %}
+  {{observationtable(obslist, scuba2_columns, title=instrument, id=instrument)}}
+  {% elif obslist[0].backend == 'ACSIS'%}
+  {{observationtable(obslist, acsis_columns, title=instrument, id=instrument)}}
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+</div>
+
+
+{% endblock %}

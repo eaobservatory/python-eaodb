@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% set active_page="Projects" %}
+
+{% from "macros.html" import project_header_sidebar with context %}
+{% if not project %}
+{% set project=None %}
+{% endif %}
+{% block sidebar %}
+<div class="sidebar">
+  {{project_header_sidebar(project)}}
+  
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'project_layout.html' %}
+{% set active_page_side="Search" %}
+{% from "macros.html" import project_table %}
+{% block content %}
+<div class="col-sm-3">
+  {% if current_user.is_authenticated %}
+  {% set projects = current_user.get_projects(capacity='PI') %}
+  {% if projects|length > 0 %}
+  <h5>PI Projects</h5>
+  {{project_table(projects, id='pi')}}
+  {% endif %}
+  {% set projects = current_user.get_projects(capacity='COI') %}
+  {% if projects|length > 0 %}
+  <h5>CoI Projects</h5>
+  {{project_table(projects, id='coi')}}
+  {% endif %}
+  {% set projects = current_user.get_projects(capacity='SUPPORT') %}
+  {% if projects|length > 0 %}
+  <h5>FOP Projects</h5>
+  {{project_table(projects, id='fop')}}
+  {% endif %}
+  {% endif %}
+<h4>Find a project</h4>
+  <form method="POST">
+  <div>
+  {{form.projectid.label}} {{form.projectid}}
+  </div>
+  {{form.csrf_token()}}
+  {{form.submit}}
+
+</form>
+</div>
+{% endblock %}
