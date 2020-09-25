@@ -1,0 +1,13 @@
+{% extends 'ops_layout.html' %}
+
+{% block content %}
+<h3> Operations </h3>
+<ul>
+  <li><a href="{{url_for('ops.default_night')}}">Night report</a></li>
+  <li><a href="{{url_for('ops.report')}}">Multi night report</a> (default is for last 7 days in UT)</li>
+  <li>Operations Six monthly report</li>
+  <li>FoP page</li>
+  <li>LAP or Queue monitoring page</li>
+  <li>TAC completion pages</li>
+</ul>
+{% endblock %}

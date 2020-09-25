@@ -1,0 +1,26 @@
+{% extends "ops_layout.html" %}
+{% from "macros.html" import timeacct_single %}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('project.static', filename='obslog.css')}}" type="text/css"/>
+{% endblock %}
+
+{% block content %}
+<h2>Time Charged for {{start_ut}} to {{end_ut}}{% if shifttype %}, shift={{shifttype}}{% endif %}</h2>
+{% if grp %}
+<table class="times">
+{% for d in grp.days|sort %}
+{% for s in grp.shifts|sort %}
+
+  <tr class="section"><th colspan="4">Time Accounting for {{d}}, shift={{s}}</th></tr>
+  {{timeacct_single(grp, shift=s, day=d, showfaults=False)}}
+
+{% endfor %}
+  {% endfor %}
+  </table>
+{% else %}
+<p>No time accts found</p>
+{% endif %}
+
+{% endblock %}

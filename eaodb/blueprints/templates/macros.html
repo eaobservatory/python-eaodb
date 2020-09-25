@@ -592,3 +592,282 @@ project.taumax)}}
 {% endif %}
 {% endmacro %}
 
+{% macro project_table(projects, id=None) %}
+ <table class="table" id=id>
+    <thead class="thead-dark">
+      <tr>
+	<th>Project</th>
+	<th style="min-width:30em">Title</th>
+	<th>Semester</th>
+	<th>Completion</th>
+	<th>Alloc. (hrs)</th>
+	<th>Remaining</th>
+	<th>Status</th>
+      </tr>
+      </thead>
+            <tbody>
+      {% for proj in projects|sort(attribute='semester,projectid', reverse=True) %}
+   {% set completion = ((proj.allocated -
+ proj.remaining)/proj.allocated)|float * 100.0 %}
+    <tr>
+      <td>{{proj.projectid|project|safe}}</td>
+      <td>{{proj.title}}</td>
+      <td>{{proj.semester}}</td>
+      <td>{{completion|format_value('Completion')}}%</td>
+      <td>{{((proj.allocated|float)/(60.0*60.0))|format_value('Completion')}}</td>
+      <td>{{((proj.remaining|float)/(60.0*60.0))|format_value('Completion')}}</td>
+      <td>{{proj.state|enabled}}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endmacro %}
+
+
+{% macro timeacct_summary(timeacct, daterange, fullinfo=None) %}
+<table class="times">
+  <tr><th colspan="4">Time Accounting for {{daterange}}</th></tr>
+  {% if timeacct.shifts|length==1  and timeacct.days|length==1 %}
+  <tr><td colspan="4">Only shift was {{''.join(timeacct.shifts)}}</td></tr>
+   {{timeacct_single(timeacct, shift=None, day=None)}}
+
+  {% else %}
+  <tr><th colspan="4">Overall Summary</th></tr>
+  {{timeacct_single(timeacct, shift=None, day=None)}}
+
+
+  {% for shift in timeacct.shifts %}
+  {% set time, unctime = timeacct.get_total_time(shift=shift, day=None) %}
+  <tr class="total section">
+  <td>Total {{shift}} </td><td>{{time|timespent}} </td><td>{{unctime|timespent_unconfirmed}}</td><td/>
+  </tr>
+  <tr><td>Project Time</td><td>{{timeacct.get_total_projecttime(shift=shift)|timespent}}</td><td/><td/></tr>
+  <tr><td>Fault Loss</td><td>{{timeacct.get_faultpercent(shift=shift)|percentspent}}</td><td/><td/></tr>
+  <tr><td>Fault Loss Technical</td><td>{{timeacct.get_faultpercent(shift=shift,technical=True)|percentspent}}</td><td/><td/></tr>
+  {% endfor %}
+
+  {% if fullinfo and (timeacct.shifts|length > 1 or timeacct.days|length > 1) %}
+  {% for day in timeacct.days %}
+  {% for shift in timeacct.shifts %}
+  <tr class="emptyrow"></tr>
+  <tr><th colspan="4">Summary for shift {{shift}} ({{day}})</th></tr>
+  {{timeacct_single(timeacct, shift=shift, day=day)}}
+  {% endfor %}
+  {% endfor %}
+  {% endif %}
+
+  {% endif %}
+</table>
+{% endmacro %}
+
+
+
+{% macro obs_summary(summarydicts) %}
+{% for key in summarydicts %}
+<table class="times obssum">
+  <tr><th>{{key}}</th><th>Time</th></tr>
+  {% for i in summarydicts[key].keys() %}
+  <tr><td class="section">{{i}}</td><td>{{summarydicts[key][i]|timespent}}</td></tr>
+  {% endfor %}
+</table>
+{% endfor %}
+{% endmacro %}
+
+
+
+{% macro msbsummary_project(msb_projdict) %}
+<h3> MSB Summary</h3>
+<table class="msbs">
+
+  {% for project in msb_projdict %}
+  <thead>
+  <tr>
+    <th>{{project|project(projectinfo)|safe}}</th>
+    <th>Title</th>
+    <th>Target</th>
+    <th>Inst.</th>
+    <th>Waveband</th>
+    <th>Status</th>
+    <th>Repeats</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for msb in msb_projdict[project]|sort(attribute='title') %}
+  <tr>
+    <td/>
+    <td>{{msb.title}}</td>
+    <td>{{msb.target}}</td>
+    <td>{{msb.instrument}}</td>
+    {% if 'SCUBA' in msb.instrument %}
+    <td>{{msb.waveband}} &micro;m</td>
+    {% else %}
+    <td>{{"{:.2f} GHz".format(msb.waveband|float * 0.000000001)}}</td>
+    {% endif %}
+    <td>{{msb.status|msbstatus}}</td>
+    <td>{{msb.repeats}}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+  {% endfor %}
+</table>
+{% endmacro %}
+
+
+
+
+{% macro shiftlog(shiftcomments) %}
+
+  <h3>Shift Log</h3>
+  <table class="shift">
+    {% for comment in shiftcomments %}
+    <tr>
+      <td class="uname">{{comment.author}}</td>
+      <td class="date">{{comment.date|obslog_dateformat}}</td>
+      <td class="text">{{comment.text|safe}}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% endmacro %}
+
+
+
+{% macro format_obstable(results, first_msbs_observations, msbtids, instrument,
+                         columns, shiftcomments=True) %}
+<div class="obslog {{instrument}}">
+  <h3>{{instrument}} Observations</h3>
+  <table class="obslog {{instrument}}">
+    <thead>
+      <tr>
+        {% for c in columns %}
+        <th class="{{c}}">{{c}}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <body>
+      {% for r in results %}
+
+        {% if r in first_msbs_observations %}
+          {{ format_msb_comment(first_msbs_observations[r], columns) }}
+        {% endif %}
+
+        {% if r.msbtid in msbtids %}
+          {% set msbcheck = True %}
+        {% else %}
+          {% set msbcheck = False %}
+        {% endif %}
+
+        {% if r["instrume"] %}
+          {{ observationrow(r, columns, msb=msbcheck) }}
+        {% elif r["shiftid"] %}
+          {% if shiftcomments%}
+            {{ format_shift_comment(r, columns) }}
+          {% endif %}
+        {% else %}
+          {{ format_gap_comment(r, columns) }}
+        {% endif %}
+
+      {% endfor %}
+    </body>
+  </table>
+</div>
+{% endmacro %}
+
+
+{% macro format_msb_comment(msb, columns) %}
+<tr class="msb-comment">
+  <td>MSB</td>
+  <td class="date">{{msb.date|obslog_dateformat }}</td>
+  <td class="author">{{msb.userid}}</td>
+  <td colspan="2" class="title">{{msb.title}}<br>{{msb.target}}</td>
+  <td colspan="{{columns|length-5}}" class="text">{{msb.comment}}</td>
+</tr>
+{% endmacro %}
+
+{% macro format_gap_comment(r, columns) %}
+<tr class="gap">
+ <td>GAP</td>
+ <td class="date">{{r.date|obslog_dateformat}}
+   <br>{{"%.1f" % (r.duration/60.0)}} min</td>
+ <td class="author">{{r.author}}</td>
+ <td colspan="{{columns|length-4}}" class="comment">
+    <div class="comment">{{r.text}}</div></td>
+ <td class="Previews">{{r.status|TIMEGAPSTATUS}}</td>
+</tr>
+{% endmacro %}
+
+
+{% macro format_shift_comment(r, columns) %}
+<tr class="shift-comment">
+  <td>SHIFT</br>COMM.</td>
+  <td class="date">{{r.date|obslog_dateformat}}</td>
+  <td class="author">{{r.author}}</td>
+  <td colspan="{{columns|length -3}}" class="comment">
+    <div class="shiftcomment">{{r.text|safe}}</div>
+  </td>
+</tr>
+
+{% endmacro %}
+
+{% macro timeacct_single(timeacct, shift=None, day=None, showfaults=True)%}
+{% set accs = timeacct.timeacct(shift=shift, day=day) %}
+{% if shift==None  %}
+  {% set shifts = timeacct.shifts %}
+{%  else %}
+  {% set shifts = [shift] %}
+{% endif %}
+{% if day==None %}
+  {% set days = timeacct.days %}
+{%  else %}
+  {% set days = [day] %}
+{% endif %}
+<tr class="section"><td>Time lost</td><td colspan="3"></td></tr>
+{% if showfaults %}
+<tr><td>Technical faults</td><td>{{accs.lost_tech|timespent}}</td><td/><td/></tr>
+<tr><td>Non-technical</td><td>{{accs.lost_nontech|timespent}}</td><td/><td/</tr>
+<tr><td>Total fault loss</td><td>{{accs.lost|timespent}}</td><td/><td/></tr>
+{% endif %}
+<tr>
+  <td>Weather</td>
+  <td>{{accs.weather[0]|timespent}}</td>
+  <td></td>
+  <td title="{{accs.weather[2]|comments(shifts,days)}}">{{accs.weather[2]| comments(shifts, days)}}</td>
+</tr>
+{% if accs.shutdown[0] > 0 %}
+<tr><td>Shutdown</td><td>{{accs.shutdown[0]|timespent}}</td><td/><td/></tr>
+{% endif %}
+<tr class="section"><td>Time spent</td><td colspan="3"></td></tr>
+{% if accs.other[0] > 0 %}
+<tr><td>Other time</td><td>{{accs.other[0]|timespent}}</td><td/>
+  <td class="Comments" title="{{accs.other[2]|comments(shifts,days)}}">{{accs.other[2]|comments(shifts, days)}}</td></tr>
+{% endif %}
+
+{% if accs.extended[0] > 0 %}
+<tr><td>Extended time</td><td>{{accs.extended[0]|timespent}}</td><td/>
+  <td class="Comments" title="{{accs.extended[2]|comments(shifts,days)}}">{{accs.extended[2]|comments(shifts, days)}}</td></tr>
+{% endif %}
+{% for country in accs.projects%}
+{% set time, projdict  = accs.projects[country] %}
+  <tr class="country">
+    <td/>
+    <td>{{country}}</td><td>{{time|timespent(blank=False)}}</td><td/>
+  </tr>
+  {% for p in projdict %}
+
+  <tr>
+    <td>{{p|project(projdict[p][3])|safe}}</td>
+    <td>{{projdict[p][0]|timespent}}</td>
+    <td>{{projdict[p][1]|timespent_unconfirmed}}</td>
+    <td class="Comments" title="{{projdict[p][2]|comments(shifts,days)}}">{{projdict[p][2]|comments(shifts,days)}}</td>
+</tr>
+  {% endfor %}
+{% endfor %}
+
+<tr class="total section"><td>Total</td><td>{{accs.total|timespent}}</td>
+  <td>{{accs.total_unc|timespent_unconfirmed}}</td><td/></tr>
+  <tr><td>Project Time</td><td>{{accs.project_time|timespent}}</td><td/><td/></tr>
+  {% if showfaults %}
+<tr><td>Fault Loss</td><td>{{accs.faultp|percentspent}}</td><td/><td/></tr>
+<tr><td>Fault Loss Technical</td><td>{{accs.faultptech|percentspent}}</td><td/><td/></tr>
+{% endif %}
+{% endmacro %}

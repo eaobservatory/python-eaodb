@@ -1,0 +1,191 @@
+{% extends "ops_layout.html" %}
+{% from "macros.html" import format_obstable, shiftlog, faulttable, msbsummary_project, obs_summary, timeacct_summary with context%}
+
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('project.static', filename='obslog.css')}}" type="text/css"/>
+{% endblock %}
+
+{% block content %}
+<h1>{% if multi %}Multi {% endif %}Night Report {{daterange}}</h1>
+{% import "bootstrap/wtf.html" as wtf %}
+<div id="form" class="col-md-4">
+  <form method="POST" action="{% if multi %}{{url_for('ops.nightreport_multi_search')}} {% else %} {{url_for('ops.nightreport_search')}} {% endif %}">
+  {{wtf.form_field(form.utdate)}}
+  {% if multi %}
+  {{wtf.form_field(form.end)}}
+  {% endif %}
+  {{form.csrf_token()}}
+  <input type="submit">
+  </form>
+</div>
+
+
+<div class="row">
+      <div id="timeacct">
+	{{timeacct_summary(timeacct, daterange)}}
+	<a href="{{url_for('ops.timeacct_info', startdate=start.strftime('%Y%m%d'), enddate=end.strftime('%Y%m%d'))}}")>See full details</a>
+      </div>
+      <div>
+      <div id="summaries" class="display">
+	<h3>Observing Conditions</h3>
+      <div class="row" style="margin-left:0px">
+	  {% if inst_time_plots|length > 0 %}
+	{{inst_time_plots|safe}}
+	{% else %}
+	<p>No good/questionable observations found.</p>
+	{% endif %}
+	</div>
+        {{obs_summary(summarydict)}}
+	</div>
+	{% if wvmplot %}
+	<div class="display" id="wvmplot">
+	  <a href="{{wvmplot}}"><img src="{{wvmplot}}" width=800px></a>
+	</div>
+	{% endif %}
+      <br>
+      <div id="events" class="display">
+	<h3>Events</h3>
+	{% if events and events|length  > 0 %}
+	{{faulttable(events)}}
+	{% else %}
+	<p>No events occured on {{daterange}}</p>
+	{% endif %}
+      </div>
+    </div>
+</div>
+<div>
+      <div id="faults" class="display">
+	<h3>Faults<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.faults" aria-expanded="true" aria-controls="table.standards">Hide/Show</button></h3>
+
+	{% if faults and faults|length  > 0 %}
+	{{faulttable(faults)}}
+	{% else %}
+	<p>No events filed for {{daterange}}</p>
+	{% endif %}
+      </div>
+      <br>
+      <div id="standards" class="display">
+	<h3>Standards </h3>
+	{% if standards and standards|length> 0 %}
+	{% for i in standardplots %}
+	{{i|safe}}
+	{% endfor %}
+	<button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.standards" aria-expanded="true" aria-controls="table.standards">Hide/Show full standard information table</button>
+	<table class="table table-sm table-nonfluid standards collapse">
+	  <thead class="thead-dark">
+	    <tr>
+	      <th>Inst.</th>
+	      <th>Source</th>
+	      <th>UT</th>
+	      <th>Obsnum</th>
+	      <th>Molecule</th>
+	      <th>Bandwidth</th>
+	      <th>Sideband</th>
+	      <th>Integrated</th>
+	      <th>% diff</th>
+	      <th>Peak</th>
+	      <th> % diff</th>
+	      <th>Status</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	  {% for standard, status in standards|sort(attribute='instrument,obsnum') %}
+	    <tr class="{{status}}">
+	      <td>{{standard.instrument}}</td>
+	      <td>{{standard.targetname}}</td>
+	      <td>{{standard.ut.date()}}</td>
+	      <td><a href="{{url_for('obs.obsinfo', obsid=standard.obsid)}}">{{standard.obsnum}}</a></td>
+	      <td>{{standard.molecule}} {{standard.line}}</td>
+	      <td>{{standard.bandwidth}}</td>
+	      <td>{{standard.sideband}}</td>
+	      <td>{% if standard.integint %} {{'%.1F' % standard.integint}}{% endif %}</td>
+	      <td>{% if standard.integ_percent %}{{'%.0F' % standard.integ_percent}}%{% endif %}</td>
+	      <td>{% if standard.peak %}{{'%.1F' % standard.peak}}{% endif %}</td>
+	      <td>{% if standard.peak_percent %}{{'%.0F' % standard.peak_percent}}%{% endif %}</td>
+	      <td>{{status}}</td>
+	    </tr>
+	    {%endfor %}
+	  </tbody>
+	</table>
+	{% else %}
+	<p>No spectral standards found for {{daterange}}</p>
+	{% endif %}
+      </div>
+      <br>
+      <div id="fcfs" class="display">
+	<h3>FCFs</h3>
+	{% if fcfs and fcfs|length> 0 %}
+	{% for i in fcfplots %}
+	{{i|safe}}
+	{% endfor %}
+	 <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="table.fcfs" aria-expanded="true" aria-controls="table.fcfs">Hide/Show full FCF information table</button>
+	<table class="table table-sm table-nonfluid fcfs collapse">
+	  <thead class="thead-dark">
+	    <tr>
+	      <th>Filter</th>
+	      <th>Source</th>
+	      <th>UT</th>
+	      <th>Obsnum</th>
+	      <th>FCF Arcsec</th>
+	      <th>error</th>
+	      <th>FCF Beam</th>
+	      <th>error</th>
+	      <th>FCF Match</th>
+	      <th>error</th>
+	      <th>BeamFWHM</th>
+	      <th>ErrorFWHM</th>
+	      <th>Status</th>
+	    </tr>
+	  </thead>
+	  <tbody>  
+	    {% for fcf, status in fcfs|sort(attribute='filter,obsnum') %}
+	    <tr class="{{status}}">
+	      <td>{{fcf.filter}}</td>
+	      <td>{{fcf.targetname}}</td>
+	      <td>{{fcf.ut.date()}}</td>
+	      <td><a href="{{url_for('obs.obsinfo', obsid=fcf.obsid)}}">{{fcf.obsnum}}</a></td>
+	      <td>{% if fcf.fcfasec %}{{'%.2f' % fcf.fcfasec}}{% endif %}</td>
+	      <td>{% if fcf.fcfasec_err %}{{'%.2f' % fcf.fcfasec_err}}{% endif %}</td>
+	      <td>{% if fcf.fcfbeam %}{{'%.0f' % fcf.fcfbeam}}{% endif %}</td>
+	      <td>{% if fcf.fcfbeam_err %}{{'%.0f' % fcf.fcfbeam_err}}{% endif %}</td>
+	      <td>{% if fcf.fcfmatch %}{{'%.0f' % fcf.fcfmatch}}{% endif %}</td>
+	      <td>{% if fcf.fcfmatch_err %}{{'%.0f' % fcf.fcfmatch_err}}{% endif %}</td>
+	      <td>{% if fcf.fwhmmain %}{{'%.1f' % fcf.fwhmmain|float}}{% endif %}</td>
+	      <td>{% if fcf.error_beam %}{{'%.1f' % fcf.error_beam|float}}{% endif %}</td>
+	      <td>{{status}}</td>
+	    </tr>
+	    {% endfor %}
+	  </tbody>
+	</table>
+	      
+
+	{% else %}
+	<p>No SCUBA-2 FCFs found for {{daterange}}</p>
+	{% endif %}
+      </div>
+	  
+</div>
+
+     {% if showmsbs %}
+     <div id="msbs" class="display">
+        {{msbsummary_project(msb_projdict)}}
+     </div>
+     {% endif %}
+      {% if showshift %}
+      <div id="shiftlog" class="display">
+        {{shiftlog(shiftcomments)}}
+      </div>
+      {% endif %}
+      {% if showobslog %}
+      <div id="obslogs" class="display">
+        <h2>Observation Log</h2>
+          {% for table in obstables %}
+          {{format_obstable(table[1],first_msbs_observations, msbtids, table[0], table[2], shiftcomments=True)}}
+          {% endfor %}
+      </div>
+      {% endif %}
+      <div id="weather">
+      </div>
+{% endblock content %}
+
