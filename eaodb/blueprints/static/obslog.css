@@ -1,0 +1,303 @@
+td.Comments {/*comment table*/
+    max-width: 10em;
+}
+
+td.Comments div.obscomment pre{
+    white-space:pre-wrap;
+    text-align: left;
+}
+
+th.Comments, td.Comments div.obscomment pre, tr.gap td.status {
+    min-width: 15em;
+}
+
+th, td {
+  border: 1px solid black;
+}
+
+table {
+    padding: 2px;
+    border-collapse: collapse;
+}
+
+td.Mode {
+    word-wrap:break-word;
+}
+
+th, td {
+    text-align: center;
+}
+
+
+tr.shift-comment td.comment {
+  text-align: left;
+}
+
+td.time, td.date {
+    word-wrap: break-word;
+}
+
+tr.msb-comment td.text {
+    text-align: left;
+}
+
+div.shiftcomment pre {
+    white-space: pre-wrap;
+}
+
+tr.msb-comment td, tr.shift-comment td {
+    border: none;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+.Quest\., .Quest\. pre {
+    color: #df7805;
+}
+
+.Reject, .Reject pre {
+    color: #ff7e00;
+}
+
+.Junk, .Junk pre {
+    /*color: #f0f;*/
+    color: #ca00ca;
+}
+
+.Bad, .Bad pre {
+    color: #f33;
+}
+
+tr:nth-child(even){
+    background-color: #d9d9d9;
+}
+
+
+
+
+tr.msb-comment {
+    background: black;
+    color: white;
+    /*border-top: 1px solid black;
+    border-right: 1px solid black;
+    border-left: 1px solid black;*/
+}
+
+tr.shift-comment {
+    background-color: #ff63475c;
+/*    border: 1px solid black;*/
+}
+
+
+thead, th {
+    background-color: black;
+    color: white;
+}
+
+
+
+/*tr.shift-comment + tr.shift-comment{
+    border-bottom: 1px solid black;
+}*/
+
+tr.msb-included + tr  td.msbmark{
+    border-top: 1px solid black;
+}
+
+tr.msb-included + tr.msb-included  td.msbmark{
+    border-top: none;
+}
+tr.msb-comment td.msbmark {
+    border-left: 1px solid black;
+}
+
+tr.msb-comment + tr td.msbmark{
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+}
+
+tr.msb-comment + tr.msb-included td.msbmark{
+    border-top: none;
+}
+tr.msb-included td.msbmark {
+    background-color: #aaaadd;
+}
+tr.msb-included td.msbmark{
+    visibility: visible;
+    min-width: 0.5em;
+    border-right:none;
+
+}
+
+tr.gap {
+    /*border: 1px solid black;*/
+    background: #e8c80847;
+}
+
+td.Bandwidth, td.Freq, td.Velocity, td.Molecule, td.Waveband{
+    white-space: pre;
+}
+
+tr.gap td{
+
+    border: none;
+}
+
+tr td:last-child{
+    border-right: 1px solid black;
+    }
+tr.gap td:first-child, tr.shift-comment td:first-child{
+    border-left: 1px solid black;
+    }
+
+
+table.shift, table.faults, table.msbs, table.times, table.obssum, table.standards, table.fcfs{
+    border:1px solid black;
+
+}
+table.shift td, table.faults td, table.msbs td, table.times td, table.obssum td, table.standards td, table.fcfs td{
+     padding:5px;
+     border: none;
+     text-align:left;
+}
+
+table.shift tr td.text, table.shift td.text pre {
+    width: 30em;
+    min-width:20em;
+    white-space: pre-wrap;
+    text-align:left;
+
+}
+
+table.times td.Comments{
+    max-width:15em;
+
+}
+
+
+table.times, table.obssum {
+    border: none
+}
+table.times  tr td:last-child{
+    border-right: 1px solid black;
+}
+table.times  tr td:first-child{
+    border-left: 1px solid black;
+}
+
+tr.emptyrow{
+    height: 2em;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    border-left: none;
+    border-right: none;
+
+}
+
+tr:last-child td{
+    border-bottom: 1px solid black;
+}
+
+table.times tr:nth-child(even){
+    background-color: unset;
+}
+
+table.times tr.section, td.section{
+    background-color: #bfa6f6;
+}
+
+tr.section td, td.section{
+    font-weight:bold;
+}
+
+/*table.times td.Comments {
+    text-overflow: ellipsis;
+    white-space: pre;
+    overflow: scroll;
+}*/
+
+table.times tr.country td{
+    font-weight: bold;
+}
+table.times tr.country td{
+    padding-top: 10px;
+}
+
+
+thead th a{
+    color: white;
+}
+
+div.preview-ACSIS{
+    display:inline-block;
+}
+
+div.preview-SCUBA-2{
+    display:table-cell;
+}
+
+
+div#timeacct {
+    float:left;
+    display: inline-block;
+    padding:10px;
+}
+
+div.container {
+    display:inline-block;
+
+}
+div.container:after{
+    clear:both;
+}
+
+div.container div{
+    clear:both;
+}
+div#summaries table{
+    display:inline-block;
+    float:left;
+    padding: 10px;
+    border:none;
+}
+
+div#faults{
+    clear:both;
+}
+
+table.obssum td.section{
+    text-align:right;
+}
+
+h3 {
+    padding-left: 10px;
+    text-align: center;
+}
+
+div.display {
+    display:table;
+}
+
+div#shiftlog table{
+    font-size:small;
+}
+
+td.Preview{
+    width:256px;
+}
+
+
+
+tr.msb-comment td{
+    border-top: 1px solid black;
+}
+
+tr.msb-comment, tr.msb-included{
+    border-left: 1em solid black;
+}
+
+
+
+div.shiftcomment, div.comment, tr.msb-comment td.text{
+    width:30em;
+}

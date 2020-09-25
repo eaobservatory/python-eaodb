@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    {% block metas %}
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% endblock %}
+
+{% block styles %}
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+crossorigin="anonymous">
+
+
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.1/b-colvis-1.6.1/b-html5-1.6.1/cr-1.5.2/datatables.min.css"/>
+ 
+    <link rel="stylesheet" href="{{url_for('project.static',
+filename='example.css')}}">
+
+
+ 
+    {% endblock %}
+
+    <title>{% block title %}Hello, world!{% endblock %}</title>
+  </head>
+<body {% block body_attribs %}{% endblock %}>
+
+{% block body -%}
+
+
+{% block navbartop %}
+{% set top_navigation_links = [(url_for('obs.observations'), "Observations"),
+(url_for('project.project_search'),'Projects'),
+('https://www.eao.hawaii.edu/archimedes','Calibration'),
+('https://www.eao.hawaii.edu/processing', 'Processing'),
+ ('http://omp.eao.hawaii.edu/cgi-bin/ompusers.pl','Users'), (url_for('ops.ops_home'), 'Operations'), ('http://omp.eao.hawaii.edu/cgi-bin/queryfault.pl?cat=JCMT', 'Faults')]
+%}
+{% set active_page = active_page|default('Observations') -%}
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: #804aef;">
+  <span class="navbar-brand"><svg class="largeicon">
+  <use xlink:href="#owl"/>
+  </svg> Archimedes</span>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      {% for href, id in top_navigation_links %}
+      <li class="nav-item {% if id==active_page %} active{% endif %}">
+        <a class="nav-link" href="{{href}}" > {{id}}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    <ul class="navbar-nav mr-auto justify-content-end">
+      {% if current_user.is_authenticated %}
+      <li class="nav-item"><a class="nav-link"
+    href="{{url_for('auth.logout')}}">{{current_user.username}} (Log Out)</a></li>
+      {% else %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for('auth.login')}}">Log
+      In</a></li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+
+  {%-endblock navbartop %}
+
+ {% set side_navigation_links = side_navigation_links|default([('obs.obsinfo', "Individual Obs"),]) %}
+  <div class="container=fluid" >
+    <div class="row min-vh-100 flex-column flex-md-row sticky">
+      <aside class="col-12 col-md-2 flex-shrink-1 navbar-light"
+    style="background: #804aef85; min-width:15em" >
+        <nav class="navbar navbar-expand flex-md-column flex-row align-items-start py-2" >
+        <div class="collapse navbar-collapse" >
+	  <ul class="nav flex-md-column flex-row navbar-nav w-100
+	    justify-content-between">
+	    {% block sidebar %}
+	   
+	    {% for href, id in side_navigation_links %}
+	    <li class="nav-item {% if id==active_page_side %} active{% endif %}">
+	    <a class="nav-link " href="{{url_for(href)}}" >{{id}}</a></li>
+	    {% endfor %}
+	   <li><a class="nav-link" href="https://omp.eao.hawaii.edu">OMP Home</a></li>
+	   {%- endblock sidebar %}
+	    </ul>
+        </div>
+	</nav>
+	</aside>
+
+	<main role="main" class="col-md-9 px-4">
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+	<ul class="flashes">
+	  {% for message in messages %}
+	  <li>{{ message }}</li>
+	  {% endfor %}
+	</ul>
+	{% endif %}
+	{% endwith %}
+    {% block content -%}
+      {%- endblock content %}
+      </main>
+</div>
+
+		{% block footer -%}
+	<nav class="navbar navbar-light bg-light">
+  <div>Owl Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+</nav>
+
+  {%- endblock footer %}
+    {% block scripts -%}
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script
+  src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+  integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+  crossorigin="anonymous"></script>
+
+
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.20/b-1.6.1/b-colvis-1.6.1/b-html5-1.6.1/cr-1.5.2/datatables.min.js"></script>
+
+
+{%- endblock scripts %}
+{% block svg %}
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+<symbol id="question-circle-fill" class="bi bi-question-circle-fill"viewBox="0 0 16 16" fill="currentColor">
+<svg class="bi bi-question-circle-fill">
+  <path fill-rule="evenodd" d="M16 8A8 8 0 110 8a8 8 0 0116 0zM6.57
+  6.033H5.25C5.22 4.147 6.68 3.5 8.006 3.5c1.397 0 2.673.73 2.673 2.24
+  0 1.08-.635 1.594-1.244 2.057-.737.559-1.01.768-1.01
+  1.486v.355H7.117l-.007-.463c-.038-.927.495-1.498
+  1.168-1.987.59-.444.965-.736.965-1.371
+  0-.825-.628-1.168-1.314-1.168-.901 0-1.358.603-1.358 1.384zm1.251
+  6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0
+1.028.388 1.028.94 0 .533-.42.927-1.029.927z" clip-rule="evenodd"/>
+</symbol>
+  </svg>
+
+
+
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+ xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none;">
+<symbol id="owl"  x="0px" y="0px"
+	 viewBox="0 0 280.002 280.002" style="enable-background:new 0 0 280.002 280.002;" xml:space="preserve">
+<g>
+	<g>
+		<path style="fill:currentColor;" d="M183.255,98.807c8.986-28.332,3.26-50.848-9.545-66.221c-2.379-5.635-2.802-10.562-1.756-14.947
+			c1.828-2.376,4.832-3.667,8.395-4.447c-2.25-0.429-4.457-0.62-6.582-0.353c2.547-4.863,6.984-9.037,12.438-12.839
+			c-11.791,2.475-22.043,7.299-27.397,19.649C137.952,6.58,110.007,5.378,89.859,18.657C84.393,7.041,74.379,2.404,62.911,0.001
+			c5.446,3.8,9.877,7.97,12.424,12.823c-2.079-0.242-4.243-0.047-6.444,0.369c3.443,0.752,6.364,1.984,8.206,4.209
+			c1.162,4.608,0.698,9.807-1.965,15.811c-9.959,14.668-14.391,36.376-8.596,65.951c-22.123,92.29,20.481,114.446,61.513,132.6
+			c-1.054,4.916-3.736,7.779-7.996,8.643c-13.521-5.423-28.479,6.781-21.061,21.801c2.694-12.213,7.925-15.994,14.745-14.496
+			c-2.595,5.15-2.4,10.66,0.123,16.477c2.687-7.592,6.848-12.645,14.492-11.644c-2.49,5.776-1.72,12.39,0.246,19.323
+			c10.615-24.438,23.82-22.383,38.892-1.238c3.545-10.217,2.699-18.566-9.287-22.172l0.035-2.373
+			c10.469,5.975,19.355,13.055,25,22.891c12.761,14.112,21.596,15.618,24.771-0.991v-0.001
+			C228.607,197.58,222.276,139.563,183.255,98.807z M126.287,109.074c-42.255-3.484-57.022-22.135-50.536-54.625
+			c10.454-33.17,34.827-29.883,49.793-3.718c14.405-28.814,35.89-24.457,48.06-3.964C187.42,77.837,168.329,107.448,126.287,109.074
+			z M135.548,235.068l13.123,6.013C142.08,248.406,133.493,248.268,135.548,235.068z M197.508,255.834
+			c-6.438-50.953-66.64-86.289-54.499-135.755l5.268-0.495c-12.141,49.466,48.06,84.802,54.499,135.755L197.508,255.834z"/>
+		<path style="fill:currentColor;" d="M120.166,84.808c-0.281,8.138,2.379,14.322,6.071,19.82c3.5-4.974,5.621-11.458,5.822-20.068
+			C130.931,75.997,121.463,75.198,120.166,84.808z"/>
+		<path style="fill:currentcolor;" d="M136.477,71.5c9.585,12.926,19.29,11.029,29.095-2.995C154.46,57.007,144.647,56.978,136.477,71.5z
+			"/>
+		<path style="fill:currentColor;" d="M85.114,66.731c5.486,15.127,15.328,16.086,28.736,5.449
+			C106.492,57.988,97.096,55.149,85.114,66.731z"/>
+	</g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+</symbol>
+</svg>
+
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink" style="display:none">
+<symbol id="owl-block" x="0px" y="0px"
+	 viewBox="0 0 593.943 593.942" style="enable-background:new 0 0 593.943 593.942;"
+	 xml:space="preserve">
+<g>
+	<g>
+		<path style="fill:currentColor" d="M457.429,325.734c-12.823-40.388-29.702-78.813-56.777-112.061c-7.381-9.065-14.3-18.519-21.224-27.944
+			c-13.975-19.013-22.102-40.771-25.455-63.693c-3.276-22.411-8.07-44.068-17.059-64.855c-1.135-2.62-0.983-6.467,0.032-9.205
+			c2.521-6.797,9.103-13.799,8.148-19.768c-1.367-8.548,2.011-12.913,6.479-18.278c0.665-0.796,0.91-1.942,1.061-3.167
+			c0.225-1.856-1.122-3.729-3.003-4.194c-1.276-0.318-2.497-0.498-3.443-0.074c-16.984,7.618-35.251,13.562-50.192,24.158
+			c-10.832,7.679-20.289,11.041-32.015,7.267c-19.56-6.292-38.593-5.333-57.867,1.048c-3.676,1.216-9.009,1.163-12.256-0.657
+			c-18.687-10.457-37.03-21.526-55.463-32.432C136.635,0.84,134.379,0,133.359,0s-1.248,1.542-0.567,3.468
+			c0.795,2.256,1.612,4.496,2.872,6.455c4.57,7.099,12.693,12.591,8.409,23.179c-0.722,1.787,1.195,5.797,3.076,7.291
+			c10.518,8.344,8.05,19.915,5.251,29.376c-5.133,17.34-6.577,34.692-3.66,52.02c2.289,13.599-0.987,25.219-5.431,37.585
+			c-3.672,10.212-5.957,21.306-6.577,32.143c-0.983,17.217-1.037,34.619,0.31,51.804c1.436,18.299,4.422,36.532,7.723,54.611
+			c3.354,18.393,8.258,36.504,11.799,54.867c1.844,9.564-0.229,20.641,3.889,28.809c4.729,9.385,4.871,18.08,4.341,27.516
+			c-1.146,20.535,1.232,40.662,14.737,56.773c12.301,14.676,21.71,31.967,39.013,42.518c10.926,6.658,9.988,15.826-1.636,21.984
+			c-7.752,4.104-16.622,6.176-25.092,8.832c-10.331,3.24-16.781,12.221-16.092,23.016c0.49,7.666,4.529,11.963,13.766,14.324
+			c1.979,0.506,2.583-0.518,1.383-2.17c-6.916-9.572-7.152-14.578-0.677-19.281c1.652-1.201,3.398-0.34,3.892,1.643
+			c1.706,6.83,3.982,7.055,12.742,4.064c3.109-1.061,6.226-2.105,8.984-3.027c1.938-0.648,4.382,0.232,5.455,1.967
+			c1.546,2.496,2.946,4.758,4.3,6.936c1.077,1.734,2.391,2.945,2.938,2.705s0.991-2.094,0.991-4.133v-9.988
+			c0-2.043,0.857-2.281,1.914-0.533c0.987,1.631,1.836,3.031,2.726,4.508c1.057,1.746,3.084,1.994,4.529,0.551
+			c3.199-3.199,6.03-6.047,8.898-8.854c2.599-2.547,5.23-5.064,7.862-7.58c1.477-1.412,2.521-0.887,1.824,1.031
+			c-0.453,1.24-1.008,2.387-1.506,3.559c-7.299,17.18-2.134,35.047,13.301,45.553c0.555,0.379,1.33,0.436,2.15,0.424
+			c1.232-0.02,1.159-1.301-0.057-2.941c-4.565-6.148-7.54-12.779-5.471-21.307c0.481-1.986,2.179-2.211,3.9-1.113
+			c4.713,3.016,7.928-0.637,10.787-4.65c3.566-5.002,6.863-10.221,9.964-15.525c3.884-6.643,9.18-11.656,17.1-9.869
+			c9.106,2.057,18.919,4.182,21.697,15.619c1.718,7.07,5.63,12.121,13.174,13.887c1.294,0.303,2.493,1.008,3.966,1.906
+			c1.742,1.064,1.881,2.889,0.281,4.158c-1.762,1.398-3.166,2.512-4.65,3.512c-1.335,0.898-2.738,1.686-4.378,2.6
+			c-1.787,0.99-1.571,1.934,0.469,2.008c14.558,0.518,17.883-3.072,19.087-17.891c0.477-5.904,0.248-11.865,0.143-17.182
+			c-0.041-2.041,1.008-2.42,2.309-0.846c7.822,9.451,16.646,19.812,24.925,30.598c4.893,6.373,10.865,10.057,18.626,10.357
+			c8.592,0.332,17.205,0.148,26.658,0.1c2.04-0.01,3.473-1.648,3.194-3.672c-2.382-17.488-4.361-32.828-6.683-48.117
+			c-1.229-8.082-0.836-15.344,2.917-23.121c5.312-11.016,9.511-22.717,12.868-34.496c9.548-33.469,11.245-67.777,10.249-102.338
+			c-0.057-2.041,1.171-2.844,2.754-1.787s2.628,0.273,2.33-1.75c-1.057-7.197-2.008-13.686-2.995-20.418
+			c-0.298-2.02,0.674-2.529,2.167-1.137c0.204,0.191,0.403,0.375,0.6,0.559c1.493,1.395,3.179,2.326,3.766,2.08
+			c0.588-0.244,0.8-2.076,0.53-4.104C460.375,341.189,459.792,333.182,457.429,325.734z"/>
+	</g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+<g>
+</g>
+</sybol>
+</svg>
+
+{% endblock %}
+  {%- endblock body %}
+  </body>
+</html>
+
+
+
+
