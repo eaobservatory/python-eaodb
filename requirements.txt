@@ -1,0 +1,12 @@
+docopt
+sshtunnel
+flask
+flask_sqlalchemy
+flask_login
+flask_wtf
+flask_ldap3_login
+plotly
+pandas
+astropy
+flask_bootstrap
+mysqlclient
