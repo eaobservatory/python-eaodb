@@ -89,3 +89,26 @@ def create_readonly_scoped_session_remote(port):
     return scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=readonly_engine_remote))
 
 
+def get_ldap_config():
+
+    conf = {}
+    config = get_config()
+    conf['LDAP_HOST'] = config.get('LDAP', 'HOST')
+    conf['LDAP_BASE_DN'] = config.get('LDAP', 'BASE_DN')
+    conf['LDAP_USER_DN'] = config.get('LDAP', 'USER_DN')
+    conf['LDAP_GROUP_DN'] = config.get('LDAP', 'GROUP_DN')
+    conf['LDAP_USER_RDN_ATTR'] = config.get('LDAP', 'USER_RDN_ATTR')
+    conf['LDAP_USER_LOGIN_ATTR'] = config.get('LDAP', 'USER_LOGIN_ATTR')
+    try:
+        conf['LDAP_BIND_USER_DN'] = config.get('LDAP', 'BIND_USER_DN')
+    except NoOptionError:
+        conf['LDAP_BIND_USER_DN'] = None
+
+    try:
+        conf['LDAP_BIND_USER_PASSWORD'] = config.get('LDAP', 'BIND_USER_PASSWORD')
+    except NoOptionError:
+        conf['LDAP_BIND_USER_PASSWORD'] = None
+    conf['LDAP_GROUP_MEMBERS_ATTR'] = config.get('LDAP', 'GROUP_MEMBERS_ATTR')
+    conf['LDAP_GROUP_OBJECT_FILTER'] =  config.get('LDAP', 'GROUP_OBJECT_FILTER')
+
+    return conf
