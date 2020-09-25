@@ -71,7 +71,21 @@ def create_readonly_all_engine():
     engine = create_engine(dburl, echo=bool(echo))
     return engine
 
+def create_readonly_all_engine_remote(port):
+    config = get_config()
+    dburl = config.get('DATABASE_READONLY', 'remoteurl')
+    dburl = dburl.format(port)
+    echo = 1
+    engine = create_engine(dburl, echo=bool(echo))
+    return engine
 
 def create_readonly_scoped_session():
     readonly_engine = create_readonly_all_engine()
     return scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=readonly_engine))
+
+
+def create_readonly_scoped_session_remote(port):
+    readonly_engine_remote = create_readonly_all_engine_remote(port)
+    return scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=readonly_engine_remote))
+
+
