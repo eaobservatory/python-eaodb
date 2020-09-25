@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block title %}
+Log In
+{% endblock %}
+
+{% block body %}
+{{ formerrors }}
+<h2> Please login with your normal EAO username and password </h2>
+
+    <form method="POST">
+        <label>Login Type{{ form.logintype}}</label>
+        <label>Username{{ form.username() }}</label>
+        <label>Password{{ form.password() }}</label>
+        <label>Remember Me {{form.remember_me() }}</label>
+        {{ form.submit() }}
+        {{ form.hidden_tag() }}
+    </form>
+{% endblock %}
