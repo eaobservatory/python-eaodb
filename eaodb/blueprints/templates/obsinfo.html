@@ -1,0 +1,169 @@
+{% extends 'obs_layout.html' %}
+{% set active_page_side="Individual Observation" %}
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('project.static',
+filename='css/bootstrap-multiselect.css')}}" type="text/css"/>
+<style type="text/css"/>.tableprevimg{max-width:300px};</style>
+{% endblock %}
+
+
+{% block content %}
+{% import "bootstrap/wtf.html" as wtf %}
+<div id="form" class="col-md-12">
+  <h2>Look up an individual observation:</h2>
+  <form method="POST" action="{{url_for('obs.obsid_search')}}" class="obsquery">
+  <div class="form-row">
+    <div class="col-lg-3 col-md-4">
+      <legend><label>Provide either Observation ID:</label></legend>
+      {{wtf.form_field(form.obsid)}}
+    </div>
+    <div class="col-lg-3 col-md-4">
+      <legend><label>Or provide all of:</label></legend>
+      <fieldset id="moreinfo">
+      <div class="form-row">
+        <div class="col-lg-4 col-md-4">
+	  {{wtf.form_field(form.utdate)}}
+	</div>
+	<div class="col-lg-4 col-md-4">
+	  {{wtf.form_field(form.obsnum)}}
+	</div>
+	<div class="col-lg-4 col-md-4">
+	  <div class="form-group">
+	    <label>Backend</label>
+	    {{wtf.form_field(form.backend, class="checkbox-list")}}
+	  </div>
+	</div>
+       </div>
+       </fieldset>
+    </div>
+  </div>
+  {{ form.csrf_token() }}
+  <input type="submit">
+  </form>
+</div>
+
+<div id="info" class="col-md-12">
+{% if obs %}
+<h2> Information for observation {{obs.obsid}}</h2>
+<div class="obssummary">
+  <h3> Summary</h3>
+  <dl class="row">
+    <dt class="col-sm-2">UT Date</dt><dd class="col-sm-10">{{obs.utdate}}</dd>
+    <dt class="col-sm-2">Obs Num</dt><dd class="col-sm-10">{{obs.obsnum}}</dd>
+    <dt class="col-sm-2">Instrument</dt><dd class="col-sm-10">{{obs.instrument}}</dd>
+    <dt class="col-sm-2">Duration</dt><dd class="col-sm-10">{{obs.duration}} (s) or {{'%.1f'|format(obs.duration/60.0)}} (mins)</dd>
+    <dt class="col-sm-2">Scanmode</dt><dd class="col-sm-10">{{obs.scanmode}}</dd>
+    <dt class="col-sm-2">Scan Pattern</dt><dd class="col-sm-10">{{obs.scan_pattern}}</dd>
+    <dt class="col-sm-2">Average WVM</dt><dd class="col-sm-10">{{obs.avwvm}}</dd>
+    <dt class="col-sm-2">Average Seeing</dt><dd class="col-sm-10">{{obs.avseeing}}</dd>
+    <dt class="col-sm-2">Band</dt><dd class="col-sm-10">{{obs.band}}</dd>
+    <dt class="col-sm-2">Project</dt><dd class="col-sm-10">{{obs.project|project|safe}}</dd>
+    <dt class="col-sm-2">Source</dt><dd class="col-sm-10">{{obs.object}}</dd>
+    <dt class="col-sm-2">MSB Title</dt><dd class="col-sm-10">{{obs.msbtitle}}</dd>
+    <dt class="col-sm-2">OMP Status</dt><dd class="col-sm-10"><span class={{obs.ompstatus}}>{{obs.ompstatus}}</span></dd>
+    <dt class="col-sm-2">Latest OMP Comment</dt><dd
+	class="col-sm-10">{{obs.latest_ompcomment.commentauthor}}:
+	{{obs.latest_ompcomment.commenttext}}</dd>
+    <dt class="col-sm-2">Subsystem Count</dt><dd class="col-sm-10">{{obs._inst_info|length}}</dd>
+  </dl>
+
+  <h3>Nightly Reduction Images</h3>
+  {% set proclinks = obs.get_processing_links() %}
+  {% for i in range(obs._inst_info|length) %}
+  <div class="col-sm-4" style='display:inline-block'>
+    {% if obs.backend=='SCUBA-2' %}
+    <h4>{{obs._inst_info[i].filter}}</h4>
+    {% else %}
+    <h4>{{obs._inst_info[i].subsysnr}}</h4>
+    {% endif %}
+    {{proclinks[i][0]|formatprocjobs(proclinks[i][1]|replace("64","1024"))|safe}}
+  </div>
+  {% endfor %}
+</div>
+
+<div>      
+  <h3>OMP Comments</h3>
+  {% if obs.obslog_comments|length < 1 %}
+  <p>No comments on this observation have been made</p>
+  {% else %}
+  <table class="obsinfo comments table table-sm table-nonfluid">
+    <thead class="thead-dark">
+      <tr><th>Username</th><th>Date</th><th>Status</th><th>Text</th></tr>
+      </thead>
+  {% for comment in obs.obslog_comments %}
+   <tr>
+     <td>{{comment.commentauthor}}</td>
+     <td>{{comment.commentdate}}</td>
+     <td>{{comment.commentstatus|ompstatus}}</td>
+     <td class="obscomment">{{comment.commenttext}}</td>
+   </tr>
+   {% endfor %}
+   <table>
+  {% endif %}
+</div>
+
+<div>
+  <h3>Calibration info</h3>
+  {% for caltype, cinfo in calinfo.items() %}
+  {% if cinfo %}
+  <table class="{{caltype}} table table-sm table-nonfluid">
+    <thead class="thead-dark">
+      <tr><th colspan={{cinfo|length + 1}}>{{caltype}}</th>
+    </thead>
+    <tbody>
+    {% for key in calinfo_columns[caltype] %}
+    <tr><th>{{key}}</th>{% for res in cinfo %}<td>{{res[key]}}</td>{% endfor %}</tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <br>
+  {% endif %}
+  {% endfor %}
+
+</div>
+<div>
+<h3> COMMON table info </h3>
+  <table class="obsinfo common table table-sm table-nonfluid">
+    <thead class="thead-dark">
+      <tr><th>Column</th><th>Value</th><th>Comment</th></tr>
+      </thead>
+  {% for key in obs.__table__.columns %}
+  <tr><th>{{key.name}}</th><td>{{obs[key.name]}}</td><td>{{headercomments.get(key.name, "")}}</td></tr>
+  {% endfor %}
+</table>
+</div>
+
+<div>
+<h3> {{obs.backend}} info</h3>
+{% set info = obs._inst_info %}
+{% set count = info|length %}
+{% if count < 1 %}
+<h3>WARNING: NO {{obs.backend}} INFO FOUND FOR THIS OBSERVATION</h3>
+{% else %}
+{% set keys = info[0].__table__.columns %}
+  <table class="obsinfo table table-sm table-nonfluid">
+    <thead class="thead-dark">
+  <tr>
+    <th>Column</th>
+    {% for i in range(count) %}
+    <th>Subsys {{i}}</th>
+    {% endfor %}
+    <th>Comment</th>
+  </tr>
+  </thead>
+  {% for key in keys %}
+  <tr>
+    <th>{{key.name}}</th>
+    {% for i in range(count) %}
+      <td> {{info[i][key.name]}}</td>
+      {% endfor %}
+      <td>{{headercomments.get(key.name, "")}}</td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% endif %}
+{% endif %}
+</div>
+{% endblock %}

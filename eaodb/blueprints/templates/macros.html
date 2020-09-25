@@ -1,0 +1,172 @@
+
+
+
+	 
+{% macro get_formatted_value(obs, value, c) -%}
+  {% if value is string -%}
+  {{ obs[value] | format_value(c) }}
+  {% elif value -%}
+  {{ value(obs) | format_value(c) }}
+  {%- endif %}
+{%- endmacro %}
+
+{% macro observationrow(obs, columns, msb=False) -%}
+<tr class="{{obs.ompstatus}} {{'msb-included' if msb}}">
+  {% for c in columns %}
+  {% set output = get_formatted_value(obs, columns.get(c, None), c)|safe %}
+  {% set output = output|default(obs[c]) %}
+  <td class="{{c}} {{obs.ompstatus}}">{% if c =='Project' -%}{{obs.project|project|safe}}{% elif c == 'UT' -%}{{obs.obsid|obs(text=output)|safe}}{% else -%}{{output}}{%- endif %}</td>
+  {% endfor %}
+</tr>
+{%- endmacro %}
+
+{% macro observationtable(observations, columns, title=None, id=None) %}
+<table class="observation table collapse show" {% if id %}id="{{id}}"{% endif %}>
+  {% if title %}
+  <caption>{{title}} Observations ({{observations|length}})<button class="btn btn-primary" data-toggle="collapse" data-target=".multi-collapse-{{id}}" type="button" aria-expanded="true" aria-controls=".multi-collapse-{{id}}">Show/Hide</a></caption>
+  {% endif %}
+  <thead class="thead-dark collapse show multi-collapse-{{id}}">
+    <tr>
+      {% for c in columns %}
+      <th class="{{c}}">{{c}}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody class="collapse show multi-collapse-{{id}}">
+  {% for o in observations %}
+    {{observationrow(o, columns)}}
+  {% endfor %}
+  </tbody>
+
+</table>
+
+{% endmacro %}
+
+
+{% macro obsqueryform(form, showproject=True) %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+<form method="POST" action="{{url_for('obs.observation_search')}}" class="obsquery">
+<div class="form-row">
+ 
+<div class="col-lg-3 col-md-4">
+  <legend>
+      <label>Observation Information</label>
+  </legend>
+  <fieldset id="collapseObs">
+  {{wtf.form_field(form.obsid)}}
+  {{wtf.form_field(form.object)}}
+  <div class="form-row">
+    <div class="col-lg-6 col-md-6">
+      {{wtf.form_field(form.ompstatus, class="checkbox-list")}}
+    </div>
+    <div class="col-lg-6 col-md-6">
+      {{wtf.form_field(form.instrument, class="checkbox-list")}}
+    </div>
+    <div class="col-lg-6 col-md-6">
+       {{wtf.form_field(form.scanmode, class="checkbox-list")}}
+    </div>
+    <div class="col-lg-6 col-md-6">
+       {{wtf.form_field(form.obs_type, class="checkbox-list")}}
+    </div>
+  </div>
+  </fieldset>
+</div>
+
+<div class="col-lg-3 col-md-4">
+  <fieldset>
+  <legend><label><span class="align-middle">Date and  Time</span>
+  <a href="#" class="helpicon" 
+  data-toggle="popover" title="Date and Time help" data-content="Give
+  a UTC date (YYYY-MM-DD) or Date and Time (YYYY-MM-DD HH:MM:SS) and
+  search only for observations after and/or before that time. If you
+  select 'Single Day', then observations that started within the Date
+  part of the Start Date will be used, and the End Date will be
+  ignored">
+  <svg class="icon">
+  <use xlink:href="#question-circle-fill"/>
+  </a></label></legend>
+  <div class="form-row">
+      <div class="col-md-6">
+        {{wtf.form_field(form.date_obs)}}
+      </div>
+      <div class="col-md-6">
+        {{wtf.form_field(form.date_end)}}
+      </div>
+    <div class="col-md-12">
+      {{wtf.form_field(form.singleday)}}<br/>
+    </div>
+  </div>
+  </fieldset>
+ 
+  <fieldset>
+  <legend><label><span class="align-middle">Time of Day</span>
+  <a href="#" class="icon text-primary" data-toggle="popover" title="Time of Day help" data-content="Give
+  an HST (default) or UTC time (HH:MM:SS) and only observations
+  occuring after that time of day (Start Time) and/or before that time
+  of day (End Time) will be included. This combines with the Date and
+  Time filters above, so that e.g. you could look for only night time
+  observations inside a given date range." >
+  <svg class="icon">
+  <use xlink:href="#question-circle-fill"/>
+  </svg></a></label></legend>
+  <div class="form-row">
+      <div class="col-md-6">
+        {{wtf.form_field(form.starttime)}}
+      </div>
+      <div class="col-md-6">
+        {{wtf.form_field(form.endtime)}}
+      </div>
+      <div class="col-md-12">
+      <div class="form-group">
+	<label class="control-label" for="utc">TimeZone</label>
+      {{wtf.form_field(form.utc)}}
+	  </div>
+    </div>
+  </div>
+  </fieldset>
+</div>
+
+<div class="col-lg-3 col-md-4">
+  <fieldset>
+  <legend><label>Heterodyne</label></legend>
+  <div class="form-row">
+    <div class="col-md-6">
+      {{wtf.form_field(form.frequency_start)}}
+    </div>
+    <div class="col-md-6">
+      {{wtf.form_field(form.frequency_end)}}
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="col-md-6">
+      {{wtf.form_field(form.bwmode, class="checkbox-list")}}
+    </div>
+    <div class="col-md-6">
+      {{wtf.form_field(form.sw_mode, class="checkbox-list")}}
+    </div>
+    {{wtf.form_field(form.molecule)}}
+  </div>
+  </fieldset>
+  </div>
+
+  <div class="col-lg-3 col-md-4">
+    <fieldset>
+    <legend><label>Project Info</label></legend>
+    {{wtf.form_field(form.project)}}
+    {{wtf.form_field(form.fop, placeholder='OMP Username')}}
+    {{wtf.form_field(form.semester)}}
+    {{wtf.form_field(form.country)}}
+    {{wtf.form_field(form.state)}}
+    </fieldset>
+    </div>
+{{ form.csrf_token() }}
+</div>
+
+<input type="submit">
+</form>
+{% if form.errors %}
+{{ form.errors}}
+{% endif %}
+{% endmacro %}
+

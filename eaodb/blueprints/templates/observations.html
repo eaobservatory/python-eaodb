@@ -1,0 +1,68 @@
+{% extends 'obs_layout.html' %}
+{% set active_page_side="Observation Search" %}
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('project.static', filename='css/bootstrap-multiselect.css')}}" type="text/css"/>
+{% endblock %}
+{% block scripts %}
+{{super()}}
+<script src="{{url_for('project.static', filename='js/bootstrap-multiselect.js')}}"></script>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+     $('#molecule').multiselect({
+        enableCaseInsensitiveFiltering:true,
+        includeResetOption: true,
+        maxHeight: 300,
+        resetText: "Clear All",
+buttonClass: "form-control",
+buttonContainer: '<div class="btn-group col-md-12" />',
+        templates: {li:'<li><label class="inmultiselect"></label></li>',
+                    buttontest: '<button type="button" class="multiselect form-control" data-toggle="dropdown">Select</button>',}
+	});
+	});
+</script>
+	<script type="text/javascript">
+	$(function () {
+  $('[data-toggle="popover"]').popover()
+})
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+    $('#HARP').DataTable( {dom: 'BRfrtip',"paging": false,
+  "info": false,
+  "searching": false, "colReorder": true, buttons: ['csv', 'colvis', ]} );
+} );
+	</script>
+{% endblock %}
+
+{% block title %}
+{% endblock %}
+
+
+
+{% block content %}
+{% from "macros.html" import obsqueryform, observationtable %}
+<div class="obsqueryform col-md-12">
+  {{obsqueryform(form)}}
+</div>
+
+<div class="obsqueryresults col-md-12">
+
+  {%  if count %}
+  <p>Found {{count}} results!</p>
+  {% if count > observations|length %}
+  <p>Showing only first {{observations|length}}</p>
+  {% endif %}
+    {% for instrument, obslist in observations|groupby('instrument') %}
+    {% if obslist[0].backend == 'SCUBA-2' %}
+        {{observationtable(obslist, scuba2_columns, title=instrument, id=instrument)}}
+     {% elif obslist[0].backend == 'ACSIS'%}
+        {{observationtable(obslist, acsis_columns, title=instrument, id=instrument)}}
+  {% endif %}
+  {% endfor %}
+  {% else %}
+  <p>No observations found</p>
+  {% endif %}
+</div>
+{% endblock %}
