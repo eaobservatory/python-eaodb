@@ -24,7 +24,7 @@ class papers(Base):
     updated = Column(DateTime)
 
     searchs = relationship('searches', secondary='pigwidgeon.paper_search_association')
-
+    authors = relationship('authors')
 
 class searches(Base):
     __tablename__ = 'searches'
