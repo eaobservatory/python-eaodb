@@ -174,7 +174,7 @@ class Obs(jcmt.COMMON):
                                      secondary=latest_obslog,
                                      primaryjoin=latest_obslog.c.obsid==jcmt.COMMON.obsid,
                                      secondaryjoin=latest_obslog.c.max_obslogid==omp.obslog.obslogid,
-                                     uselist=False, viewonly=True, lazy='joined')
+                                     uselist=False, lazy='joined')
 
     ompstatus = association_proxy('latest_ompcomment', 'commentstatus',
                                       getset_factory=commentstatus_getset_factory)
@@ -208,12 +208,33 @@ class Obs(jcmt.COMMON):
                       jcmt.COMMON.inbeam.like('%pol%'),
                       jcmt.COMMON.inbeam.like('%fts%')),
                      'POL-2-FTS-2'),
-                (and_(jcmt.COMMON.inbeam != None),
+                (and_(jcmt.COMMON.inbeam != None,jcmt.COMMON.inbeam != 'shutter'),
                      jcmt.COMMON.instrume + jcmt.COMMON.inbeam),
                    ],
             else_=jcmt.COMMON.instrume)
 
+    @hybrid_property
+    def band(self):
+        """ Weather band based on average JCMT WVM"""
+        if self.avwvm:
+            return Bands.get_band(self.avwvm)
+        else:
+            return None
+    @band.expression
+    def band(cls):
 
+        return case([
+            (func.abs(func.timestampdiff(text('SECOND'), jcmt.COMMON.wvmdatst, jcmt.COMMON.date_obs)) > _TIMESTAMP_OFFSET_ALLOWANCE,
+                 'unknown'),
+            (func.abs(func.timestampdiff(text('SECOND'), jcmt.COMMON.wvmdaten, jcmt.COMMON.date_end)) > _TIMESTAMP_OFFSET_ALLOWANCE,
+                 'unknown'),
+            ((jcmt.COMMON.wvmtauen + jcmt.COMMON.wvmtaust)/2.0 < 0.05, 1),
+            ((jcmt.COMMON.wvmtauen + jcmt.COMMON.wvmtaust)/2.0 < 0.08, 2),
+            ((jcmt.COMMON.wvmtauen + jcmt.COMMON.wvmtaust)/2.0 < 0.12, 3),
+            ((jcmt.COMMON.wvmtauen + jcmt.COMMON.wvmtaust)/2.0 < 0.20, 4),
+            ((jcmt.COMMON.wvmtauen + jcmt.COMMON.wvmtaust)/2.0 < 10, 5),
+            ],
+            else_='unknown')
 
     def get_processing_links(self):
         values = []
@@ -295,13 +316,13 @@ class Obs(jcmt.COMMON):
         else:
             return None
 
-    @property
-    def band(self):
-        """ Weather band based on average JCMT WVM"""
-        if self.avwvm:
-            return Bands.get_band(self.avwvm)
-        else:
-            return None
+    #@property
+    #def band(self):
+    #    """ Weather band based on average JCMT WVM"""
+    #    if self.avwvm:
+    #        return Bands.get_band(self.avwvm)
+    #    else:
+    #        return None
 
     @property
     def results(self):
@@ -322,13 +343,13 @@ class Obs(jcmt.COMMON):
             q = q.filter(calibration.loginfo.logsource.in_(['jsaproc-jcmt-nightly', 'jsaproc-jcmt-reproc']))
             results[tabname] = q.all()
         return results
-            
+
 
     def __repr__(self):
         return "<{}({}: {}/{}/{}/{})>".format(self.__class__.__name__,self.obsid,
                                               self.ompstatus, self.instrument,
                                                   self.obs_type, self.object)
-                            
+
 class ProjUser(omp.projuser):
 
     __tablename__ = 'ompprojuser'
@@ -368,7 +389,7 @@ class ObsMSB(omp.obs):
     def __repr__(self):
         return "<{}({}: {} {})>".format(self.__class__.__name__, self.target, self.full_instrument)
 
-    
+
 class MSBScheduled(omp.msb):
     __tablename__ = 'ompmsb'
     __table_args__ = (
@@ -381,7 +402,6 @@ class MSBScheduled(omp.msb):
         return "<{}({}: {} {})>".format(self.__class__.__name__, self.projectid, self.title,
                                            self.remaining)
 
-    
 class MSBDone(omp.msbdone):
     __tablename__ = 'ompmsbdone'
     __table_args__ = (
@@ -422,7 +442,7 @@ class Feedback(omp.feedback):
                                                   self.subject.replace('\n', ''))
 
 
-msbdone_summary = namedtuple('MSBDoneSummary', 'checksum status title instrument waveband target projectid msb_count observationcount') 
+msbdone_summary = namedtuple('MSBDoneSummary', 'checksum status title instrument waveband target projectid msb_count observationcount')
 
 class Project(omp.proj):
     __tablename__ = 'ompproj'
@@ -457,7 +477,7 @@ class Project(omp.proj):
                           primaryjoin=omp.proj.projectid==omp.faultassoc.projectid,
                           secondaryjoin=omp.fault.faultid==omp.faultassoc.faultid,
                           foreign_keys=[omp.faultassoc.projectid, omp.fault.faultid])
-    
+
     msbs_done = relationship(MSBDone,
                             primaryjoin=omp.proj.projectid==omp.msbdone.projectid,
                              foreign_keys = omp.msbdone.projectid,
@@ -496,7 +516,7 @@ class Project(omp.proj):
             results  = [msbdone_summary(*(i[0].checksum, i[0].status, i[0].title, i[0].instrument, i[0].waveband, i[0].target, i[0].projectid, i[1], obscount_dict.get(i[0].checksum, 0))) for i in msbs]
             #results = [msbdone_summary(*(i[0].checksum, i[0].status, i[0].title, i[0].instrument, i[0].waveband, i[0].target, i[0].projectid), i[-1], i[-2]) for i in results]
         return results
-    
+
     def __repr__(self):
         return "<{}({})>".format(self.__class__.__name__, self.projectid)
 
@@ -550,7 +570,6 @@ class Project(omp.proj):
     def get_dates_obsactivity(self, byshift=False, observations=None):
         """Get the dates where observations happened/time was charged.
 
-        
         Return an ordered dictionary with the keys as days that either observations
         were taken or time was charged (or both).
 
@@ -601,7 +620,7 @@ class Project(omp.proj):
         results = OrderedDict()
         for d in sorted(list(dates)):
             results[d] = (timeresults.get(d, None), obsresults.get(d, None))
-            
+
         return results
 
 
@@ -652,7 +671,7 @@ class Project(omp.proj):
         extra_project_names = lap_project_aliases.get(self.projectid, None)
         if extra_project_names:
             all_projectid.append(extra_project_names)
-        # Get the values for 
+
         #c2 = alias(pig.comments)
         #intjoin = select([func.max(pig.comments.id)]).where(
         #    pig.comments.paper_id==pig.papers.id).correlate(pig.papers)
@@ -697,7 +716,7 @@ lap_project_aliases = {'M16AL001': ['TRANSIENT',]
 
 # Faults!!!
 
-#Stats for time range or queue/semester combo, including, faults, 
+#Stats for time range or queue/semester combo, including, faults,
 
 
 # Obss: link to jsa_proc processing and links to calibration objects.
@@ -712,7 +731,7 @@ lap_project_aliases = {'M16AL001': ['TRANSIENT',]
 # Groups: used to instantiate relationships.
 
 class msbGroup(list):
-    
+
     def totaltime(self):
         pass
     def totalcount(self):
