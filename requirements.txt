@@ -10,3 +10,4 @@ pandas
 astropy
 flask_bootstrap
 mysqlclient
+matplotlib
