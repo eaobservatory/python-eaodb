@@ -34,7 +34,9 @@ from eaodb.relationships import Obs, Scuba2, Acsis, Project, MSBDone, TimeAcct
 from eaodb import timeacct
 
 
-from eaodb.blueprints.operation_charts import plot_observed_time_by, plot_night_standards, plot_night_fcfs
+
+
+from eaodb.blueprints.operation_charts import plot_observed_time_by, plot_night_standards, plot_night_fcfs, create_performance_stats
 
 TimeGap = namedtuple('TimeGap', 'date date_end duration status text author obslogid runnr instrument telescope')
 WVMFILE="https://omp.eao.hawaii.edu/cgi-bin/get_resource.pl?type=dq-nightly&utdate={}&filename=tau_{}.png"
@@ -104,15 +106,28 @@ class NightRepForm(FlaskForm):
    utdate = DateField('UT Date', validators=[validators.required(),])
    end = DateField('End', validators=[validators.optional(),])
 
+class BoardRepForm(FlaskForm):
+   start = DateField('Start', validators=[validators.required(),])
+   end = DateField('End', validators=[validators.required(),])
+
+
 @ops.route('/')
 def ops_home():
     return render_template('ops_home.html')
 @ops.route('/night-search', methods=('POST',))
+
 def nightreport_search():
     form = NightRepForm()
     if not form.validate_on_submit():
         flash(form.errors)
     return redirect(url_for('ops.night_report', utdate=form.utdate.data.strftime('%Y%m%d')))
+
+@ops.route('/boardreport-search', methods=('POST',))
+def boardreport_search():
+    form = BoardRepForm()
+    if not form.validate_on_submit():
+        flash(form.errors)
+    return redirect(url_for('ops.boardreport', start=form.start.data.strftime('%Y%m%d'), end=form.end.data.strftime('%Y%m%d')))
 
 @ops.route('/report-search', methods=('POST',))
 def nightreport_multi_search():
@@ -123,6 +138,22 @@ def nightreport_multi_search():
     if form.end.data:
         kwargs['end'] = form.end.data.strftime('%Y%m%d')
     return redirect(url_for('ops.report', **kwargs))
+
+
+@ops.route('/board-report/')
+def boardreport():
+    end = request.args.get('end', None, type=str)
+    start = request.args.get('start', None, type=str)
+    if start and end:
+        start = datetime.datetime.strptime(str(start), '%Y%m%d')
+        end = datetime.datetime.strptime(str(end), '%Y%m%d')
+        # Get board info?
+    form = BoardRepForm()
+    form.process(start=start, end=end)
+    onsky_plots, faultplots, timeacct_plots, weather_plots = create_performance_stats(start, end, db.session)
+    return render_template('ops_boardreport.html', form=form, onsky_plots=onsky_plots,
+                               faultplots = faultplots,
+                               timeacct_plots = timeacct_plots, weather_plots=weather_plots)
 
 @ops.route('/report/')
 def report():
@@ -135,7 +166,7 @@ def report():
     end += datetime.timedelta(hours=23, minutes=59, seconds=59.9)
     form = NightRepForm()
     form.process(utdate=start, end=end)
-    
+
     return prepare_night_report(start, end, db.session, showobslog=False, showshift=False, showmsbs=False, form=form)
 
 @ops.route('/timeacct/')
@@ -144,10 +175,10 @@ def timeacct_info():
     startdate_ut = request.args.get('startdate', utdate_default, type=str)
     enddate_ut = request.args.get('enddate', None, type=str)
     shift = request.args.get('shift', None, type=str)
-    
+
     startdate_ut = datetime.datetime.strptime(str(startdate_ut), '%Y%m%d')
     if not enddate_ut:
-        enddate_ut = startdate_ut 
+        enddate_ut = startdate_ut
     else:
         enddate_ut = datetime.datetime.strptime(str(enddate_ut), '%Y%m%d')
     enddate_ut += datetime.timedelta(hours=23, minutes=59, seconds=59.9)
@@ -183,7 +214,7 @@ def night_report(utdate):
     utdate = datetime.datetime.strptime(utdate, '%Y%m%d')
     form.process(utdate=utdate)
     start = utdate
-    end = start +datetime.timedelta(hours=23, minutes=59, seconds=59.9) 
+    end = start +datetime.timedelta(hours=23, minutes=59, seconds=59.9)
 
     return prepare_night_report(start, end, db.session, showobslog=True, showshift=True, form=form)
 
@@ -226,7 +257,7 @@ def prepare_night_report(start, end, session, showobslog=True, showshift=True, s
                 output.append(msbsummary(ms[0].title, ms[0].target, instrument, ms[0].waveband, ms[0].status, len(ms)))
             projdict[p] = output
 
-    # Check if we are dealing with one night or more? 
+    # Check if we are dealing with one night or more?
     daterange = (start.date(), end.date())
     if daterange[1]==daterange[0]:
         daterange = (daterange[0],)
@@ -319,7 +350,7 @@ def get_nightreport_info(session, telescope, start, end, shifts=True, msbs=True,
     telescope = telescope.upper()
     # Get HST time, and convert start and end times to utc.
     hst = pytz.timezone('HST')
-    
+
     start_hst=start.replace(tzinfo=datetime.timezone.utc).astimezone(tz=hst)
     end_hst=end.replace(tzinfo=datetime.timezone.utc).astimezone(tz=hst)
 
