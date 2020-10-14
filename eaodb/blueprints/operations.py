@@ -122,7 +122,7 @@ def nightreport_search():
         flash(form.errors)
     return redirect(url_for('ops.night_report', utdate=form.utdate.data.strftime('%Y%m%d')))
 
-@ops.route('/boardreport-search', methods=('POST',))
+@ops.route('/boardbreport-search', methods=('POST',))
 def boardreport_search():
     form = BoardRepForm()
     if not form.validate_on_submit():
@@ -147,10 +147,13 @@ def boardreport():
     if start and end:
         start = datetime.datetime.strptime(str(start), '%Y%m%d')
         end = datetime.datetime.strptime(str(end), '%Y%m%d')
+        onsky_plots, faultplots, timeacct_plots, weather_plots = create_performance_stats(start, end, db.session)
+    else:
+        onsky_plots = faultplots= timeacct_plots = weather_plots = None
         # Get board info?
     form = BoardRepForm()
     form.process(start=start, end=end)
-    onsky_plots, faultplots, timeacct_plots, weather_plots = create_performance_stats(start, end, db.session)
+
     return render_template('ops_boardreport.html', form=form, onsky_plots=onsky_plots,
                                faultplots = faultplots,
                                timeacct_plots = timeacct_plots, weather_plots=weather_plots)
