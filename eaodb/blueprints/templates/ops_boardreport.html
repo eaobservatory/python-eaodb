@@ -1,0 +1,141 @@
+{% extends 'ops_layout.html' %}
+
+{% block scripts %}
+{{super()}}
+<script>
+var buttonCommon = {
+  init: function (dt, node, config) {
+    var table = dt.table().context[0].nTable;
+    if (table) config.title = $(table).data('id')
+    
+  },
+  title: 'default title'
+};
+$.extend( $.fn.dataTable.defaults, {
+    "buttons": [
+        $.extend( true, {}, buttonCommon, {
+            extend: 'csvHtml5',
+            exportOptions: {
+                columns: ':visible'
+            }
+        } ),
+    ]
+} );
+
+$('table.table').DataTable( {
+dom: 'Bt',
+buttons: ['csvHtml5',]
+});
+
+
+
+
+</script>
+{% endblock %}
+
+{% block content %}
+<h3> Board Report </h3>
+
+{% import "bootstrap/wtf.html" as wtf %}
+
+<div id="form" class="col-md-4">
+  <form method="POST" action="{{url_for('ops.boardreport_search')}}">
+  {{wtf.form_field(form.start)}}
+  {{wtf.form_field(form.end)}}
+  {{form.csrf_token()}}
+  <input type="submit">
+  </form>
+</div>
+
+{% if onsky_plots %}
+<div>
+  <h2>Plots based on Observation values</h2>
+  {% for key, (img, caption, dfs) in onsky_plots.items() %}
+  <figure>
+  <figcaption>{{caption}}</figcaption>
+  <a href="data:image/png;base64,{{img.decode()}}" download="{{key}}.png">
+  <img src="data:image/png;base64,{{img.decode()}}" alt=""/>
+  </a>
+  </figure>
+  {% if dfs|length > 0 %}
+  <h3><a class="btn btn-primary" data-toggle="collapse" href="#table-{{key}}" role="button"  aria-expanded="true", aria-controls="collapseActivitySummary">Click to show/hide tables</a></h3>
+  <div id="table-{{key}}" class="collapse">
+    {% for df in dfs %}
+    {{df.to_html(classes=["table table-sm thead-dark download"], table_id=key)|safe|replace('id=', 'data-id=')}}
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if faultplots  %}
+<div>
+  <h2>Plots based on fault time</h2>
+  {% for key, (img, caption, dfs) in faultplots.items() %}
+  <figure>
+  <figcaption>{{caption}}</figcaption>
+  <a href="data:image/png;base64,{{img.decode()}}" download="{{key}}.png">
+  <img src="data:image/png;base64,{{img.decode()}}" alt="" />
+  </a>
+  {% if dfs|length > 0 %}
+    <h3><a class="btn btn-primary" data-toggle="collapse" href="#table-{{key}}" role="button"  aria-expanded="true", aria-controls="collapseActivitySummary">Click to show/hide tables</a></h3>
+  <div id="table-{{key}}" class="collapse">
+  {% for df in dfs %}
+  {{df.to_html(classes=["table table-sm thead-dark download"], table_id=key)|safe}}
+    {% endfor %}
+    </div>
+  {% endif %}
+  </figure>
+  
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if timeacct_plots %}
+<div>
+  <h2>Plots based on time accounting information</h2>
+  {% for key, (img, caption, dfs) in timeacct_plots.items() %}
+  <figure>
+  <figcaption>{{caption}}</figcaption>
+    <a href="data:image/png;base64,{{img.decode()}}" download="{{key}}.png">
+  <img src="data:image/png;base64,{{img.decode()}}" alt="" />
+  </a>
+  
+  </figure>
+  {% if dfs|length > 0 %}
+    <h3><a class="btn btn-primary" data-toggle="collapse" href="#table-{{key}}" role="button"  aria-expanded="true", aria-controls="collapseActivitySummary">Click to show/hide tables</a></h3>
+  <div id="table-{{key}}" class="collapse ">
+
+  {% for df in dfs %}
+  {{df.to_html(classes=["table table-sm thead-dark download"], table_id=key)|safe}}
+    {% endfor %}
+    </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+{% if weather_plots %}
+<div>
+  <h2>Plots based on the values taken from the JCMT WVM</h2>
+  {% for key, (img, caption, dfs) in weather_plots.items() %}
+  <figure>
+  <figcaption>{{caption}}</figcaption>
+    <a href="data:image/png;base64,{{img.decode()}}" download="{{key}}.png">
+  <img src="data:image/png;base64,{{img.decode()}}" alt="" />
+  </a>
+  </figure>
+  {% if dfs and dfs|length > 0 %}
+    <h3><a class="btn btn-primary" data-toggle="collapse" href="#table-{{key}}" role="button"  aria-expanded="true", aria-controls="collapseActivitySummary">Click to show/hide tables</a></h3>
+  <div id="table-{{key}}" class="collapse  download">
+
+  {% for df in dfs %}
+  {{df.to_html(classes=["table table-sm thead-dark "], table_id=key)|safe}}
+    {% endfor %}
+    </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
