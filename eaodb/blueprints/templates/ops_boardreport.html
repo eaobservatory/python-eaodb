@@ -3,31 +3,14 @@
 {% block scripts %}
 {{super()}}
 <script>
-var buttonCommon = {
-  init: function (dt, node, config) {
-    var table = dt.table().context[0].nTable;
-    if (table) config.title = $(table).data('id')
-    
-  },
-  title: 'default title'
-};
-$.extend( $.fn.dataTable.defaults, {
-    "buttons": [
-        $.extend( true, {}, buttonCommon, {
-            extend: 'csvHtml5',
-            exportOptions: {
-                columns: ':visible'
-            }
-        } ),
-    ]
+$(document).ready(function() {
+    $('table.table').DataTable( {
+        dom: 'Bt',
+        buttons: [
+            'copy', 'csv',
+        ]
+    } );
 } );
-
-$('table.table').DataTable( {
-dom: 'Bt',
-buttons: ['csvHtml5',]
-});
-
-
 
 
 </script>
