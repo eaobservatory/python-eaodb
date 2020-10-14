@@ -1,4 +1,10 @@
-{% extends "ops_layout.html" %}
+{% extends 'ops_layout.html' %}
+{% if multi %}
+{% set active_page_side="Multi Night Report" %}
+{% else %}
+{% set active_page_side="Night Report" %}
+{% endif %}
+
 {% from "macros.html" import format_obstable, shiftlog, faulttable, msbsummary_project, obs_summary, timeacct_summary with context%}
 
 {% block styles %}
