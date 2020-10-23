@@ -1,7 +1,7 @@
 
 
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 from eaodb.util import get_config
@@ -33,7 +33,7 @@ def create_app(port):
     # Add the ldap config information from the .ini file.
     ldapconf = get_ldap_config()
     app.config.update(ldapconf)
-    
+
     # Login Manager: set up ldap as well.
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -49,9 +49,11 @@ def create_app(port):
     app.register_blueprint(project, url_prefix='/project')
     app.register_blueprint(obs, url_prefix='/obs')
     app.register_blueprint(ops, url_prefix='/ops')
-    
+
+
+    @app.route('/')
+    def home_page():
+         return redirect(url_for('ops.ops_home'), code=303)
     return app
 
 
-
-    
